@@ -47,7 +47,7 @@ export class ObligationPersistence {
   @Column()
   requiresDocument!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   documentUrl!: string | null;
 
   @Column()

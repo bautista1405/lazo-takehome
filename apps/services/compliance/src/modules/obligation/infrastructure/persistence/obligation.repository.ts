@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import type { Obligation } from '@repo/types';
 import type { IObligationRepository } from '../../application/ports/obligation-repository.interface';
 import { ObligationEntity } from '../../domain/obligation.entity';
@@ -18,6 +18,21 @@ export class TypeOrmObligationRepository implements IObligationRepository {
     private readonly statusChangeRepository: Repository<ObligationStatusChangePersistence>,
     private readonly dataSource: DataSource,
   ) {}
+
+  async findAll(): Promise<ObligationEntity[]> {
+    const rows = await this.repository.find({
+      order: {
+        dueDate: 'ASC',
+      },
+    });
+    const historiesByObligationId = await this.findStatusHistories(
+      rows.map((row) => row.id),
+    );
+
+    return rows.map((row) =>
+      ObligationMapper.toDomain(row, historiesByObligationId.get(row.id) ?? []),
+    );
+  }
 
   async findById(id: string): Promise<ObligationEntity | null> {
     const row = await this.repository.findOneBy({ id });
@@ -176,6 +191,31 @@ export class TypeOrmObligationRepository implements IObligationRepository {
         changedAt: 'ASC',
       },
     });
+  }
+
+  private async findStatusHistories(
+    obligationIds: string[],
+  ): Promise<Map<string, ObligationStatusChangePersistence[]>> {
+    if (!obligationIds.length) {
+      return new Map();
+    }
+
+    const entries = await this.statusChangeRepository.find({
+      where: {
+        obligationId: In(obligationIds),
+      },
+      order: {
+        changedAt: 'ASC',
+      },
+    });
+
+    return entries.reduce((histories, entry) => {
+      const history = histories.get(entry.obligationId) ?? [];
+      history.push(entry);
+      histories.set(entry.obligationId, history);
+
+      return histories;
+    }, new Map<string, ObligationStatusChangePersistence[]>());
   }
 
   private async createVersionConflictError(

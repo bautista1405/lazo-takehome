@@ -13,6 +13,7 @@ import {
   ObligationVersionConflictError,
 } from '../../domain/obligation.errors';
 import { Obligation } from '@repo/types';
+import type { UpdateObligationModel } from '../../domain/models/obligationModel';
 
 @Injectable()
 export class ObligationService {
@@ -20,6 +21,10 @@ export class ObligationService {
     @Inject(OBLIGATION_REPOSITORY)
     private readonly obligationRepository: IObligationRepository,
   ) {}
+
+  async list(): Promise<ObligationEntity[]> {
+    return this.obligationRepository.findAll();
+  }
 
   async getById(id: string): Promise<ObligationEntity> {
     const obligation = await this.obligationRepository.findById(id);
@@ -36,11 +41,14 @@ export class ObligationService {
 
   async update(
     id: string,
-    obligation: ObligationEntity,
-    expectedVersion: number,
+    updates: UpdateObligationModel,
   ): Promise<ObligationEntity> {
+    const existing = await this.getById(id);
+    const obligation = await this.mapDomainErrors(() =>
+      Promise.resolve(existing.updateDetails(updates)),
+    );
     const existingObligation = await this.mapDomainErrors(() =>
-      this.obligationRepository.update(id, obligation, expectedVersion),
+      this.obligationRepository.update(id, obligation, updates.expectedVersion),
     );
 
     if (!existingObligation) {

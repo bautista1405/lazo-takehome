@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
   Obligation,
@@ -17,37 +17,43 @@ class InMemoryObligationRepository implements IObligationRepository {
   private readonly statusHistory = new Map<string, ObligationStatusChange[]>();
   private statusHistorySequence = 1;
 
-  async findById(id: string): Promise<ObligationEntity | null> {
-    const obligation = this.obligations.get(id);
-
-    return obligation ? this.toEntity(obligation) : null;
+  findAll(): Promise<ObligationEntity[]> {
+    return Promise.resolve(
+      [...this.obligations.values()]
+        .sort((left, right) => left.dueDate.localeCompare(right.dueDate))
+        .map((obligation) => this.toEntity(obligation)),
+    );
   }
 
-  async findByCompanyTaxId(
-    companyTaxId: string,
-  ): Promise<ObligationEntity | null> {
+  findById(id: string): Promise<ObligationEntity | null> {
+    const obligation = this.obligations.get(id);
+
+    return Promise.resolve(obligation ? this.toEntity(obligation) : null);
+  }
+
+  findByCompanyTaxId(companyTaxId: string): Promise<ObligationEntity | null> {
     const obligation = [...this.obligations.values()].find(
       (item) => item.companyTaxId === companyTaxId,
     );
 
-    return obligation ? this.toEntity(obligation) : null;
+    return Promise.resolve(obligation ? this.toEntity(obligation) : null);
   }
 
-  async save(obligation: ObligationEntity): Promise<ObligationEntity> {
+  save(obligation: ObligationEntity): Promise<ObligationEntity> {
     const dto = obligation.toDTO();
     this.obligations.set(dto.id, dto);
     this.statusHistory.set(dto.id, []);
 
-    return this.toEntity(dto);
+    return Promise.resolve(this.toEntity(dto));
   }
 
-  async delete(id: string): Promise<boolean> {
+  delete(id: string): Promise<boolean> {
     this.statusHistory.delete(id);
 
-    return this.obligations.delete(id);
+    return Promise.resolve(this.obligations.delete(id));
   }
 
-  async update(
+  update(
     id: string,
     obligation: ObligationEntity,
     expectedVersion: number,
@@ -55,7 +61,7 @@ class InMemoryObligationRepository implements IObligationRepository {
     const existing = this.obligations.get(id);
 
     if (!existing) {
-      return null;
+      return Promise.resolve(null);
     }
 
     this.assertVersion(id, existing.version, expectedVersion);
@@ -68,10 +74,10 @@ class InMemoryObligationRepository implements IObligationRepository {
 
     this.obligations.set(id, next);
 
-    return this.toEntity(next);
+    return Promise.resolve(this.toEntity(next));
   }
 
-  async updateStatus(
+  updateStatus(
     id: string,
     status: Obligation['status'],
     expectedVersion: number,
@@ -79,7 +85,7 @@ class InMemoryObligationRepository implements IObligationRepository {
     const existing = this.obligations.get(id);
 
     if (!existing) {
-      return null;
+      return Promise.resolve(null);
     }
 
     this.assertVersion(id, existing.version, expectedVersion);
@@ -95,12 +101,9 @@ class InMemoryObligationRepository implements IObligationRepository {
     const entry = this.createStatusHistoryEntry(existing, nextDto);
 
     this.obligations.set(id, nextDto);
-    this.statusHistory.set(id, [
-      ...(this.statusHistory.get(id) ?? []),
-      entry,
-    ]);
+    this.statusHistory.set(id, [...(this.statusHistory.get(id) ?? []), entry]);
 
-    return this.toEntity(nextDto);
+    return Promise.resolve(this.toEntity(nextDto));
   }
 
   private toEntity(obligation: Obligation): ObligationEntity {
@@ -212,20 +215,102 @@ describe('Obligation application flow (e2e)', () => {
       });
     }
   });
+
+  it('blocks submitted status when required document evidence is missing', async () => {
+    const created = await createObligation(controller, {
+      requiresDocument: true,
+      documentUrl: null,
+    });
+    const inProgress = await controller.updateStatus(created.id, {
+      status: 'in_progress',
+      expectedVersion: created.version,
+    });
+
+    try {
+      await controller.updateStatus(inProgress.id, {
+        status: 'submitted',
+        expectedVersion: inProgress.version,
+      });
+      throw new Error('Expected document-gated status update to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).getResponse()).toMatchObject({
+        statusCode: 400,
+        status: 'document_required',
+        details: {
+          targetStatus: 'submitted',
+          requiredField: 'documentUrl',
+        },
+      });
+    }
+  });
+
+  it('allows submitted status without document evidence when it is not required', async () => {
+    const created = await createObligation(controller, {
+      requiresDocument: false,
+      documentUrl: null,
+    });
+    const inProgress = await controller.updateStatus(created.id, {
+      status: 'in_progress',
+      expectedVersion: created.version,
+    });
+
+    const submitted = await controller.updateStatus(inProgress.id, {
+      status: 'submitted',
+      expectedVersion: inProgress.version,
+    });
+
+    expect(submitted.status).toBe('submitted');
+    expect(submitted.documentUrl).toBeNull();
+    expect(submitted.requiresDocument).toBe(false);
+  });
+
+  it('blocks clearing the document url after submission', async () => {
+    const created = await createObligation(controller);
+    const inProgress = await controller.updateStatus(created.id, {
+      status: 'in_progress',
+      expectedVersion: created.version,
+    });
+    const submitted = await controller.updateStatus(inProgress.id, {
+      status: 'submitted',
+      expectedVersion: inProgress.version,
+    });
+
+    try {
+      await controller.update(submitted.id, {
+        expectedVersion: submitted.version,
+        documentUrl: null,
+      });
+      throw new Error('Expected submitted document removal to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).getResponse()).toMatchObject({
+        statusCode: 400,
+        status: 'document_required',
+        details: {
+          targetStatus: 'submitted',
+          requiredField: 'documentUrl',
+        },
+      });
+    }
+  });
 });
 
 function createObligation(
   controller: ObligationController,
+  overrides: Partial<
+    Omit<Obligation, 'id' | 'version' | 'status' | 'companyTaxId'>
+  > = {},
 ): Promise<ObligationResponse> {
   return controller.create({
     type: 'annual_report',
     title: 'File annual report',
     description: 'Submit the annual report before the state deadline.',
-    status: 'pending',
     dueDate: '2026-08-15',
     owner: 'Legal Ops',
     requiresDocument: true,
     documentUrl: 'https://example.com/documents/annual-report.pdf',
     companyTaxId: '12-3456789',
+    ...overrides,
   });
 }

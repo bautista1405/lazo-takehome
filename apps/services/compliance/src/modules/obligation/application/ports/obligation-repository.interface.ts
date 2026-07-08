@@ -1,7 +1,8 @@
-import type { ObligationEntity } from "../../domain/obligation.entity";
-import type { Obligation } from "@repo/types";
+import type { ObligationEntity } from '../../domain/obligation.entity';
+import type { Obligation } from '@repo/types';
 
 export interface IObligationRepository {
+  findAll(): Promise<ObligationEntity[]>;
   findById(id: string): Promise<ObligationEntity | null>;
   findByCompanyTaxId(companyTaxId: string): Promise<ObligationEntity | null>;
   save(obligation: ObligationEntity): Promise<ObligationEntity>;

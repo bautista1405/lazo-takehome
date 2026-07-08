@@ -8,6 +8,7 @@ import { ObligationController } from './modules/obligation/infrastructure/http/o
 describe('ObligationController', () => {
   let controller: ObligationController;
   let obligationService: {
+    list: jest.Mock;
     getById: jest.Mock;
     create: jest.Mock;
     delete: jest.Mock;
@@ -31,6 +32,7 @@ describe('ObligationController', () => {
 
   beforeEach(async () => {
     obligationService = {
+      list: jest.fn(),
       getById: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
@@ -58,13 +60,14 @@ describe('ObligationController', () => {
   });
 
   it('returns a masked public response when creating an obligation', async () => {
-    obligationService.create.mockResolvedValue(ObligationEntity.from(obligation));
+    obligationService.create.mockResolvedValue(
+      ObligationEntity.from(obligation),
+    );
 
     const response = await controller.create({
       type: obligation.type,
       title: obligation.title,
       description: obligation.description,
-      status: obligation.status,
       dueDate: obligation.dueDate,
       owner: obligation.owner,
       requiresDocument: obligation.requiresDocument,
@@ -77,6 +80,18 @@ describe('ObligationController', () => {
     expect(response.documentUrl).toBe(obligation.documentUrl);
     expect(response.version).toBe(1);
     expect(response.statusHistory).toEqual([]);
+  });
+
+  it('returns masked public responses when listing obligations', async () => {
+    obligationService.list.mockResolvedValue([
+      ObligationEntity.from(obligation),
+    ]);
+
+    const response = await controller.list();
+
+    expect(response).toHaveLength(1);
+    expect(response[0]).not.toHaveProperty('companyTaxId');
+    expect(response[0]?.maskedCompanyTaxId).toBe('**-***6789');
   });
 
   it('rejects status changes through the detail update endpoint', async () => {

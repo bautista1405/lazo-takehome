@@ -28,7 +28,26 @@ const ErrorResponseSchema = registry.register(
 registry.register('CreateObligationRequest', CreateObligationSchema);
 registry.register('UpdateObligationRequest', UpdateObligationSchema);
 registry.register('ObligationResponse', ObligationResponseSchema);
-registry.register('UpdateObligationStatusRequest', UpdateObligationStatusSchema);
+registry.register(
+  'UpdateObligationStatusRequest',
+  UpdateObligationStatusSchema,
+);
+
+registry.registerPath({
+  method: 'get',
+  path: '/obligation',
+  summary: 'List obligations ordered by due date',
+  responses: {
+    200: {
+      description: 'Obligations ordered by due date.',
+      content: {
+        'application/json': {
+          schema: z.array(ObligationResponseSchema),
+        },
+      },
+    },
+  },
+});
 
 registry.registerPath({
   method: 'get',

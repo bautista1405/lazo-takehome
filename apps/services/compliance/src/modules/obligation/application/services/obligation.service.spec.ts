@@ -15,9 +15,9 @@ describe('ObligationService', () => {
         {
           provide: OBLIGATION_REPOSITORY,
           useValue: {
-            updateStatus: jest.fn().mockRejectedValue(
-              new DocumentRequiredForSubmissionError(),
-            ),
+            updateStatus: jest
+              .fn()
+              .mockRejectedValue(new DocumentRequiredForSubmissionError()),
           },
         },
       ],
@@ -79,7 +79,8 @@ describe('ObligationService', () => {
       expect((error as ConflictException).getResponse()).toEqual({
         statusCode: 409,
         status: 'version_conflict',
-        message: 'The obligation changed since it was last read. Refresh and retry.',
+        message:
+          'The obligation changed since it was last read. Refresh and retry.',
         details: {
           obligationId: '8a3a4e8f-9a84-42dd-8c1f-e6b6edc7d04b',
           expectedVersion: 1,

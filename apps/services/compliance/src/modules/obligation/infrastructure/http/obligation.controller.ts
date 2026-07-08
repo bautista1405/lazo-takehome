@@ -37,18 +37,21 @@ function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
 export class ObligationController {
   constructor(private readonly obligationService: ObligationService) {}
 
+  @Get()
+  async list(): Promise<ObligationResponse[]> {
+    const entities = await this.obligationService.list();
+
+    return entities.map((entity) => entity.toResponse());
+  }
+
   @Get(':id')
-  async get(
-    @Param('id') id: string,
-  ): Promise<ObligationResponse> {
+  async get(@Param('id') id: string): Promise<ObligationResponse> {
     const entity = await this.obligationService.getById(id);
     return entity.toResponse();
   }
 
   @Post()
-  async create(
-    @Body() body: unknown,
-  ): Promise<ObligationResponse> {
+  async create(@Body() body: unknown): Promise<ObligationResponse> {
     const obligation = parseBody(CreateObligationSchema, body);
     const entity = ObligationEntity.create(obligation);
     const created = await this.obligationService.create(entity);
@@ -56,9 +59,7 @@ export class ObligationController {
   }
 
   @Delete(':id')
-  async delete(
-    @Param('id') id: string,
-  ): Promise<string> {
+  async delete(@Param('id') id: string): Promise<string> {
     await this.obligationService.delete(id);
     return 'Obligation deleted';
   }
@@ -69,13 +70,7 @@ export class ObligationController {
     @Body() body: unknown,
   ): Promise<ObligationResponse> {
     const updates = parseBody(UpdateObligationSchema, body);
-    const existing = await this.obligationService.getById(id);
-    const entity = existing.updateDetails(updates);
-    const updated = await this.obligationService.update(
-      id,
-      entity,
-      updates.expectedVersion,
-    );
+    const updated = await this.obligationService.update(id, updates);
     return updated.toResponse();
   }
 
