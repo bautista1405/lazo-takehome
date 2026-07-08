@@ -109,7 +109,7 @@ One detail: the status change revalidates the transition against the row *inside
 
 ## Sensitive data
 
-`companyTaxId` is stored complete. The system may need the real identifier to file or reconcile., but it never leaves the API complete: read responses replace it with `maskedCompanyTaxId` at the response boundary, and nothing logs it. The response schema doesn't even have a field for the raw value, so leaking it would require adding code.
+`companyTaxId` is stored complete. The system may need the real identifier to file or reconcile, but it never leaves the API complete: read responses replace it with `maskedCompanyTaxId` at the response boundary, and nothing logs it. The response schema doesn't even have a field for the raw value, so leaking it would require adding code.
 
 ## Frontend
 

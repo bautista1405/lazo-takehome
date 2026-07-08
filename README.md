@@ -76,6 +76,8 @@ pnpm --filter compliance test:e2e    # HTTP endpoints incl. version-conflict han
 pnpm check-types                     # strict TypeScript across the monorepo
 ```
 
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs type checks, lint, both backend test suites and the full build on every push to `main` and every pull request, on the same Node version the API runs in production.
+
 ## Deploying
 
 The web app calls the API exclusively from the server (RSC + Server Actions), so the API needs no CORS setup and its URL is never exposed to the browser.
@@ -105,5 +107,4 @@ API_URL=https://<your-render-service>.onrender.com pnpm --filter compliance seed
 
 - A frontend behavior test for the transition flow (blocked submit button → attach document → submit).
 - Structured logs (pino) with a redaction test proving the tax ID never reaches log output.
-- CI running lint + tests for both layers.
 - Replace `synchronize` with explicit migrations.
