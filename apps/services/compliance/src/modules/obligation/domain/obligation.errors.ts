@@ -2,7 +2,8 @@ import type { ObligationStatus } from '@repo/types';
 
 export type ObligationDomainErrorStatus =
   | 'invalid_status_transition'
-  | 'document_required';
+  | 'document_required'
+  | 'version_conflict';
 
 export type ObligationDomainErrorResponse = {
   status: ObligationDomainErrorStatus;
@@ -56,5 +57,23 @@ export class DocumentRequiredForSubmissionError extends ObligationDomainError {
 
   constructor() {
     super('Attach a document before submitting this obligation.');
+  }
+}
+
+export class ObligationVersionConflictError extends ObligationDomainError {
+  readonly status = 'version_conflict';
+  readonly details: {
+    obligationId: string;
+    expectedVersion: number;
+    currentVersion?: number;
+  };
+
+  constructor(params: {
+    obligationId: string;
+    expectedVersion: number;
+    currentVersion?: number;
+  }) {
+    super('The obligation changed since it was last read. Refresh and retry.');
+    this.details = params;
   }
 }

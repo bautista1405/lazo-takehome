@@ -1,5 +1,9 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
-import type { ObligationStatus, ObligationType } from '@repo/types';
+import type {
+  ObligationStatus,
+  ObligationStatusChange,
+  ObligationType,
+} from '@repo/types';
 import { z } from 'zod';
 
 extendZodWithOpenApi(z);
@@ -32,6 +36,11 @@ const ObligationObjectSchema = z.object({
   id: z.uuid().openapi({
     description: 'Stable obligation identifier.',
     example: '8a3a4e8f-9a84-42dd-8c1f-e6b6edc7d04b',
+  }),
+  version: z.number().int().positive().openapi({
+    description:
+      'Optimistic concurrency version. Send this back as expectedVersion when mutating.',
+    example: 1,
   }),
   type: ObligationTypeSchema,
   title: z.string().min(1).openapi({
@@ -71,21 +80,57 @@ const ObligationObjectSchema = z.object({
 
 export const ObligationSchema = ObligationObjectSchema;
 
-export const CreateObligationSchema = ObligationSchema.omit({ id: true }).openapi(
-  'CreateObligationRequest',
-  {
-    description: 'Request body for creating a compliance obligation.',
-  },
-);
+export const CreateObligationSchema = ObligationSchema.omit({
+  id: true,
+  version: true,
+}).openapi('CreateObligationRequest', {
+  description: 'Request body for creating a compliance obligation.',
+});
 
-export const UpdateObligationSchema = CreateObligationSchema.omit({
+const ExpectedVersionSchema = z.number().int().positive().openapi({
+  description:
+    'Version observed by the client. The write fails with 409 when it is stale.',
+  example: 1,
+});
+
+const UpdateObligationFieldsSchema = CreateObligationSchema.omit({
   status: true,
+}).partial();
+
+export const UpdateObligationSchema = UpdateObligationFieldsSchema.extend({
+  expectedVersion: ExpectedVersionSchema,
 })
-  .partial()
   .strict()
+  .refine(
+    (body) => Object.keys(body).some((key) => key !== 'expectedVersion'),
+    {
+      message: 'Provide at least one obligation field to update.',
+    },
+  )
   .openapi('UpdateObligationRequest', {
     description:
       'Request body for editing obligation details. Status changes must use the status endpoint.',
+  });
+
+export const ObligationStatusChangeSchema = z
+  .object({
+    id: z.uuid().openapi({
+      description: 'Stable audit entry identifier.',
+      example: '5a8fc174-f691-4b14-a71a-71f24c14a0cb',
+    }),
+    obligationId: z.uuid().openapi({
+      description: 'Obligation whose status changed.',
+      example: '8a3a4e8f-9a84-42dd-8c1f-e6b6edc7d04b',
+    }),
+    fromStatus: ObligationStatusSchema,
+    toStatus: ObligationStatusSchema,
+    changedAt: z.iso.datetime().openapi({
+      description: 'Timestamp when the status change was persisted.',
+      example: '2026-07-08T15:30:00.000Z',
+    }),
+  } satisfies Record<keyof ObligationStatusChange, z.ZodType>)
+  .openapi('ObligationStatusChange', {
+    description: 'Audit entry for a persisted obligation status transition.',
   });
 
 export const ObligationResponseSchema = ObligationSchema.omit({
@@ -106,6 +151,9 @@ export const ObligationResponseSchema = ObligationSchema.omit({
         'Status transitions currently allowed by the backend state machine.',
       example: ['in_progress'],
     }),
+    statusHistory: z.array(ObligationStatusChangeSchema).openapi({
+      description: 'Persisted status-change audit trail for this obligation.',
+    }),
   })
   .openapi('ObligationResponse', {
     description: 'Public obligation API response with sensitive fields masked.',
@@ -120,6 +168,7 @@ export const ObligationIdParamsSchema = z
 export const UpdateObligationStatusSchema = z
   .object({
     status: ObligationStatusSchema,
+    expectedVersion: ExpectedVersionSchema,
   })
   .openapi('UpdateObligationStatusRequest', {
     description: 'Request body for changing an obligation status.',

@@ -1,5 +1,10 @@
 import { randomUUID } from 'crypto';
-import type { Obligation, ObligationResponse, ObligationStatus } from '@repo/types';
+import type {
+  Obligation,
+  ObligationResponse,
+  ObligationStatus,
+  ObligationStatusChange,
+} from '@repo/types';
 import {
   DocumentRequiredForSubmissionError,
   InvalidStatusTransitionError,
@@ -18,17 +23,22 @@ const validTransitions: Record<ObligationStatus, readonly ObligationStatus[]> = 
 
 export class ObligationEntity {
   private constructor(
-    private readonly props: Obligation
+    private readonly props: Obligation,
+    private readonly statusHistory: ObligationStatusChange[] = [],
   ) {}
 
-  static from(props: Obligation) {
-    return new ObligationEntity(props);
+  static from(
+    props: Obligation,
+    statusHistory: ObligationStatusChange[] = [],
+  ) {
+    return new ObligationEntity(props, statusHistory);
   }
 
   static create(props: CreateObligationModel) {
     return new ObligationEntity({
       ...props,
       id: randomUUID(),
+      version: 1,
     });
   }
 
@@ -44,6 +54,7 @@ export class ObligationEntity {
       maskedCompanyTaxId: maskCompanyTaxId(companyTaxId),
       overdue: this.isOverdue(now),
       allowedTransitions: this.allowedTransitions(),
+      statusHistory: this.statusHistory,
     };
   }
 
@@ -52,10 +63,12 @@ export class ObligationEntity {
   }
 
   updateDetails(updates: UpdateObligationModel): ObligationEntity {
+    const { expectedVersion: _expectedVersion, ...changes } = updates;
+
     return new ObligationEntity({
       ...this.props,
-      ...updates,
-    });
+      ...changes,
+    }, this.statusHistory);
   }
 
   withStatus(status: Obligation['status']): ObligationEntity {
@@ -74,7 +87,7 @@ export class ObligationEntity {
     return new ObligationEntity({
       ...this.props,
       status,
-    });
+    }, this.statusHistory);
   }
 
   canTransitionTo(status: ObligationStatus): boolean {
