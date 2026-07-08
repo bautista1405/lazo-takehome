@@ -117,4 +117,45 @@ describe('ObligationEntity', () => {
       },
     ]);
   });
+
+  describe('isOverdue', () => {
+    it('is not overdue on the due date and becomes overdue the day after', () => {
+      const obligation = ObligationEntity.from(
+        baseObligation({ status: 'in_progress', dueDate: '2026-07-07' }),
+      );
+
+      expect(obligation.isOverdue(new Date('2026-07-07T23:59:59Z'))).toBe(
+        false,
+      );
+      expect(obligation.isOverdue(new Date('2026-07-08T00:00:00Z'))).toBe(true);
+    });
+
+    it('marks past-due pending and in_progress obligations as overdue', () => {
+      for (const status of ['pending', 'in_progress'] as const) {
+        const obligation = ObligationEntity.from(
+          baseObligation({ status, dueDate: '2026-01-01' }),
+        );
+
+        expect(obligation.isOverdue(new Date('2026-07-08T12:00:00Z'))).toBe(
+          true,
+        );
+      }
+    });
+
+    it('never marks submitted or done obligations as overdue', () => {
+      for (const status of ['submitted', 'done'] as const) {
+        const obligation = ObligationEntity.from(
+          baseObligation({
+            status,
+            dueDate: '2026-01-01',
+            documentUrl: 'https://example.com/documents/annual-report.pdf',
+          }),
+        );
+
+        expect(obligation.isOverdue(new Date('2026-07-08T12:00:00Z'))).toBe(
+          false,
+        );
+      }
+    });
+  });
 });

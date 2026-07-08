@@ -1,159 +1,107 @@
-# Turborepo starter
+# Compliance Obligations Tracker
 
-This Turborepo starter is maintained by the Turborepo core team.
+Full-stack take-home for Lazo: track a company's compliance obligations — what to file, when it is due, in what state, and with which supporting documentation.
 
-## Using this example
+- **Web (dashboard)**: Next.js App Router, Server Components + Server Actions, Tailwind, i18n (es/en).
+- **API**: NestJS with the domain isolated from HTTP and persistence (ports & adapters), PostgreSQL via TypeORM.
+- **Docs**: OpenAPI served by the API at `/docs` (Swagger UI) and `/openapi.json`.
 
-Run the following command:
+Architecture and trade-off decisions are documented in [DECISIONS.md](DECISIONS.md).
 
-```sh
-npx create-turbo@latest
+## Live demo
+
+- Web: _pending — see [Deploying](#deploying)_
+- API + OpenAPI docs: _pending — see [Deploying](#deploying)_
+
+## Repository layout
+
+```
+apps/
+├── web                    → Next.js dashboard (consumes the API server-side only)
+└── services/compliance    → NestJS API
+    └── src/modules/obligation
+        ├── domain          → state machine, invariants, overdue, masking (pure TS)
+        ├── application     → use cases + repository port
+        └── infrastructure  → HTTP controller, TypeORM persistence + mapper
+packages/
+├── types                  → shared API contract types (@repo/types)
+├── ui                     → shared UI primitives (@repo/ui)
+├── typescript-config      → shared tsconfig
+└── eslint-config          → shared lint rules
 ```
 
-## What's inside?
+## Domain rules (enforced by the backend, never by the form)
 
-This Turborepo includes the following packages/apps:
+State machine — the only way an obligation's status changes:
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```
+pending → in_progress → submitted → done
+             ↑    ↓         ↓         ↓
+             ← pending   in_progress  in_progress (reopen)
 ```
 
-Without global `turbo`, use your package manager:
+- **Invalid transitions are rejected with the list of allowed ones.** The API responds with `allowedTransitions` and `blockedTransitions` on every read; the frontend renders buttons from that — it contains no domain rules.
+- **Document-gated submission**: when `requiresDocument` is true, the obligation cannot reach `submitted` without a `documentUrl`. Blocked transitions carry a machine-readable `reason`.
+- **`overdue` is derived, never stored**: computed in the domain entity as a civil-date comparison (`dueDate < today in UTC`) for open statuses only (`pending`, `in_progress`).
+- **`companyTaxId` is sensitive**: stored complete, returned only masked (`**-***6789`), never logged.
+- **Audit trail**: every status change is recorded (from → to, when) in the same transaction as the change itself. The detail view shows the history.
+- **Concurrency**: optimistic locking. Every mutation requires `expectedVersion`; a stale version gets `409 Conflict` and the UI asks the user to refresh.
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+## Running locally
+
+Requirements: Node ≥ 20, pnpm 9 (`corepack enable`), Docker.
+
+```bash
+docker compose up -d        # PostgreSQL 16 on :5432
+pnpm install
+pnpm dev                    # web on :3000, API on :3002
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Optional demo data (created through the public API, so it also builds audit history):
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```bash
+pnpm --filter compliance seed
 ```
 
-Without global `turbo`:
+- Web: http://localhost:3000
+- API: http://localhost:3002 — Swagger UI at http://localhost:3002/docs
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+## Tests
+
+```bash
+pnpm --filter compliance test        # domain + application behavior (state machine, doc-gate, masking, error mapping)
+pnpm --filter compliance test:e2e    # HTTP endpoints incl. version-conflict handling
+pnpm check-types                     # strict TypeScript across the monorepo
 ```
 
-### Develop
+## Deploying
 
-To develop all apps and packages, run the following command:
+The web app calls the API exclusively from the server (RSC + Server Actions), so the API needs no CORS setup and its URL is never exposed to the browser.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+**API + database (Render):** [render.yaml](render.yaml) is a Render Blueprint that provisions the NestJS service and a free PostgreSQL instance wired together. In Render: *New → Blueprint → select this repo*. The free instance spins down when idle (first request takes ~30s) and the free database expires after 30 days — acceptable for a demo, documented trade-off.
 
-```sh
-cd my-turborepo
-turbo dev
+**Web (Vercel):** import the repo with root directory `apps/web` and set:
+
+```
+COMPLIANCE_API_URL=https://<your-render-service>.onrender.com
 ```
 
-Without global `turbo`, use your package manager:
+Schema is created on boot (`TYPEORM_SYNCHRONIZE` defaults to true — see DECISIONS.md for why that is acceptable here and what production would use instead). Seed the deployed API with:
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+```bash
+API_URL=https://<your-render-service>.onrender.com pnpm --filter compliance seed
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Deliberately left out
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+- **Real document upload** — the domain only asks "is there a document?"; `documentUrl` is a mock reference, so swapping in S3/presigned uploads changes an adapter, not the rules.
+- **Migrations** — `synchronize` gated by env for this scope; production would use versioned TypeORM migrations.
+- **Auth / multi-tenancy** — out of scope per the brief; the repository port is where tenant scoping would land.
+- **Pagination** — the list endpoint is querystring-ready; the dataset here doesn't justify it.
 
-```sh
-turbo dev --filter=web
-```
+## With more time
 
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- A frontend behavior test for the transition flow (blocked submit button → attach document → submit).
+- Structured logs (pino) with a redaction test proving the tax ID never reaches log output.
+- CI running lint + tests for both layers.
+- Replace `synchronize` with explicit migrations.

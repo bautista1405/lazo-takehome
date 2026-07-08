@@ -12,7 +12,7 @@ import {
   ObligationDomainError,
   ObligationVersionConflictError,
 } from '../../domain/obligation.errors';
-import { Obligation } from '@repo/types';
+import type { Obligation } from '@repo/types';
 import type { UpdateObligationModel } from '../../domain/models/obligationModel';
 
 @Injectable()

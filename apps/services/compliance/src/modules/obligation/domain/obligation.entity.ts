@@ -60,7 +60,10 @@ export class ObligationEntity {
   }
 
   isOverdue(now = new Date()): boolean {
-    return new Date(this.props.dueDate) < now && this.props.status !== 'done';
+    const isOpen =
+      this.props.status === 'pending' || this.props.status === 'in_progress';
+
+    return isOpen && this.props.dueDate < toUtcIsoDate(now);
   }
 
   updateDetails(updates: UpdateObligationModel): ObligationEntity {
@@ -137,6 +140,10 @@ export class ObligationEntity {
   private isValidStatusStep(status: ObligationStatus): boolean {
     return validTransitions[this.props.status].includes(status);
   }
+}
+
+function toUtcIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 function hasRequiredDocument(
