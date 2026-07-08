@@ -10,8 +10,10 @@ Architecture and trade-off decisions are documented in [DECISIONS.md](DECISIONS.
 
 ## Live demo
 
-- Web: _pending — see [Deploying](#deploying)_
-- API + OpenAPI docs: _pending — see [Deploying](#deploying)_
+- Web: https://lazo-compliance-tracker.vercel.app
+- API: https://compliance-api-dt6t.onrender.com — OpenAPI docs at [/docs](https://compliance-api-dt6t.onrender.com/docs)
+
+The API runs on Render's free tier: after 15 idle minutes it spins down and the first request takes ~30 seconds while it wakes up.
 
 ## Repository layout
 
