@@ -7,14 +7,14 @@ import {
   VersionColumn,
 } from 'typeorm';
 
-const obligationTypes = [
+export const obligationTypes = [
   'annual_report',
   'franchise_tax',
   'boi_report',
   'registered_agent_renewal',
 ] as const;
 
-const obligationStatuses = [
+export const obligationStatuses = [
   'pending',
   'in_progress',
   'submitted',

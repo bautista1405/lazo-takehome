@@ -1,5 +1,6 @@
 export type Obligation = {
   id: string;
+  version: number;
   type: ObligationType;
   title: string;
   description: string;
@@ -15,6 +16,15 @@ export type ObligationResponse = Omit<Obligation, 'companyTaxId'> & {
   maskedCompanyTaxId: string;
   overdue: boolean;
   allowedTransitions: ObligationStatus[];
+  statusHistory: ObligationStatusChange[];
+};
+
+export type ObligationStatusChange = {
+  id: string;
+  obligationId: string;
+  fromStatus: ObligationStatus;
+  toStatus: ObligationStatus;
+  changedAt: string;
 };
 
 export type ObligationStatus = 'pending' | 'in_progress' | 'submitted' | 'done';

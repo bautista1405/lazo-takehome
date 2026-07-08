@@ -71,7 +71,11 @@ export class ObligationController {
     const updates = parseBody(UpdateObligationSchema, body);
     const existing = await this.obligationService.getById(id);
     const entity = existing.updateDetails(updates);
-    const updated = await this.obligationService.update(id, entity);
+    const updated = await this.obligationService.update(
+      id,
+      entity,
+      updates.expectedVersion,
+    );
     return updated.toResponse();
   }
 
@@ -80,11 +84,15 @@ export class ObligationController {
     @Param('id') id: string,
     @Body() body: unknown,
   ): Promise<ObligationResponse> {
-    const { status: obligationStatus } = parseBody(
+    const { status: obligationStatus, expectedVersion } = parseBody(
       UpdateObligationStatusSchema,
       body,
     );
-    const entity = await this.obligationService.updateStatus(id, obligationStatus);
+    const entity = await this.obligationService.updateStatus(
+      id,
+      obligationStatus,
+      expectedVersion,
+    );
     return entity.toResponse();
   }
 }
