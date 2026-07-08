@@ -1,22 +1,98 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './modules/obligation/infrastructure/http/obligation.controller';
-import { AppService } from './modules/obligation/application/obligation.service';
+import { BadRequestException } from '@nestjs/common';
+import type { Obligation } from '@repo/types';
+import { ObligationService } from './modules/obligation/application/services/obligation.service';
+import { ObligationEntity } from './modules/obligation/domain/obligation.entity';
+import { ObligationController } from './modules/obligation/infrastructure/http/obligation.controller';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('ObligationController', () => {
+  let controller: ObligationController;
+  let obligationService: {
+    getById: jest.Mock;
+    create: jest.Mock;
+    delete: jest.Mock;
+    update: jest.Mock;
+    updateStatus: jest.Mock;
+  };
+
+  const obligation: Obligation = {
+    id: '8a3a4e8f-9a84-42dd-8c1f-e6b6edc7d04b',
+    version: 1,
+    type: 'annual_report',
+    title: 'File annual report',
+    description: 'Submit the annual report before the state deadline.',
+    status: 'pending',
+    dueDate: '2026-08-15',
+    owner: 'Legal Ops',
+    requiresDocument: true,
+    documentUrl: 'https://example.com/documents/annual-report.pdf',
+    companyTaxId: '12-3456789',
+  };
 
   beforeEach(async () => {
+    obligationService = {
+      getById: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+    };
+
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+      controllers: [ObligationController],
+      providers: [
+        {
+          provide: ObligationService,
+          useValue: obligationService,
+        },
+      ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    controller = app.get<ObligationController>(ObligationController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('module wiring', () => {
+    it('creates the controller', () => {
+      expect(controller).toBeDefined();
     });
+  });
+
+  it('returns a masked public response when creating an obligation', async () => {
+    obligationService.create.mockResolvedValue(ObligationEntity.from(obligation));
+
+    const response = await controller.create({
+      type: obligation.type,
+      title: obligation.title,
+      description: obligation.description,
+      status: obligation.status,
+      dueDate: obligation.dueDate,
+      owner: obligation.owner,
+      requiresDocument: obligation.requiresDocument,
+      documentUrl: obligation.documentUrl,
+      companyTaxId: obligation.companyTaxId,
+    });
+
+    expect(response).not.toHaveProperty('companyTaxId');
+    expect(response.maskedCompanyTaxId).toBe('**-***6789');
+    expect(response.documentUrl).toBe(obligation.documentUrl);
+    expect(response.version).toBe(1);
+    expect(response.statusHistory).toEqual([]);
+  });
+
+  it('rejects status changes through the detail update endpoint', async () => {
+    await expect(
+      controller.update(obligation.id, {
+        expectedVersion: obligation.version,
+        status: 'submitted',
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('requires expectedVersion when changing status', async () => {
+    await expect(
+      controller.updateStatus(obligation.id, {
+        status: 'in_progress',
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });
