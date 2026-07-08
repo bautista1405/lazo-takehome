@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -7,7 +8,10 @@ import {
 import { OBLIGATION_REPOSITORY } from '../ports/obligation.token';
 import type { IObligationRepository } from '../ports/obligation-repository.interface';
 import { ObligationEntity } from '../../domain/obligation.entity';
-import { ObligationDomainError } from '../../domain/obligation.errors';
+import {
+  ObligationDomainError,
+  ObligationVersionConflictError,
+} from '../../domain/obligation.errors';
 import { Obligation } from '@repo/types';
 
 @Injectable()
@@ -33,10 +37,10 @@ export class ObligationService {
   async update(
     id: string,
     obligation: ObligationEntity,
+    expectedVersion: number,
   ): Promise<ObligationEntity> {
-    const existingObligation = await this.obligationRepository.update(
-      id,
-      obligation,
+    const existingObligation = await this.mapDomainErrors(() =>
+      this.obligationRepository.update(id, obligation, expectedVersion),
     );
 
     if (!existingObligation) {
@@ -57,9 +61,10 @@ export class ObligationService {
   async updateStatus(
     id: string,
     status: Obligation['status'],
+    expectedVersion: number,
   ): Promise<ObligationEntity> {
     const obligation = await this.mapDomainErrors(() =>
-      this.obligationRepository.updateStatus(id, status),
+      this.obligationRepository.updateStatus(id, status, expectedVersion),
     );
 
     if (!obligation) {
@@ -72,6 +77,13 @@ export class ObligationService {
     try {
       return await operation();
     } catch (error) {
+      if (error instanceof ObligationVersionConflictError) {
+        throw new ConflictException({
+          statusCode: 409,
+          ...error.toResponse(),
+        });
+      }
+
       if (error instanceof ObligationDomainError) {
         throw new BadRequestException({
           statusCode: 400,
