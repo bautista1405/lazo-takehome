@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { OBLIGATION_REPOSITORY } from '../ports/obligation.token';
 import type { IObligationRepository } from '../ports/obligation-repository.interface';
 import { ObligationEntity } from '../../domain/obligation.entity';
+import { Obligation } from '@repo/types';
 
 @Injectable()
 export class ObligationService {
@@ -10,7 +11,7 @@ export class ObligationService {
     private readonly obligationRepository: IObligationRepository,
   ) {}
 
-  async getById(id: string): Promise<ObligationEntity | null> {
+  async getById(id: string): Promise<ObligationEntity> {
     const obligation = await this.obligationRepository.findById(id);
 
     if (!obligation) {
@@ -23,13 +24,19 @@ export class ObligationService {
     return await this.obligationRepository.save(obligation);
   }
 
-  async update(id: string): Promise<ObligationEntity | null> {
-    const obligation = await this.obligationRepository.update(id);
+  async update(
+    id: string,
+    obligation: ObligationEntity,
+  ): Promise<ObligationEntity> {
+    const existingObligation = await this.obligationRepository.update(
+      id,
+      obligation,
+    );
 
-    if (!obligation) {
+    if (!existingObligation) {
       throw new NotFoundException('Obligation not found');
     }
-    return obligation;
+    return existingObligation;
   }
 
   async delete(id: string): Promise<string> {
@@ -41,8 +48,8 @@ export class ObligationService {
     return 'Obligation deleted';
   }
 
-  async updateStatus(id: string): Promise<ObligationEntity | null> {
-    const obligation = await this.obligationRepository.updateStatus(id);
+  async updateStatus(id: string, status: Obligation['status']): Promise<ObligationEntity> {
+    const obligation = await this.obligationRepository.updateStatus(id, status);
 
     if (!obligation) {
       throw new NotFoundException('Obligation not found');
