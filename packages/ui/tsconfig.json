@@ -4,6 +4,6 @@
     "outDir": "dist",
     "strictNullChecks": true
   },
-  "include": ["src"],
+  "include": ["components", "interfaces", "src"],
   "exclude": ["node_modules", "dist"]
 }
