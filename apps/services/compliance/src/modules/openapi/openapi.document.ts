@@ -131,6 +131,14 @@ registry.registerPath({
         },
       },
     },
+    409: {
+      description: 'Obligation version is stale.',
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+    },
   },
 });
 
@@ -168,6 +176,14 @@ registry.registerPath({
     },
     404: {
       description: 'Obligation not found.',
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+    },
+    409: {
+      description: 'Obligation version is stale.',
       content: {
         'application/json': {
           schema: ErrorResponseSchema,
