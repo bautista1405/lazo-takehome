@@ -6,7 +6,8 @@ import { z } from 'zod';
 import {
   CreateObligationSchema,
   ObligationIdParamsSchema,
-  ObligationSchema,
+  ObligationResponseSchema,
+  UpdateObligationSchema,
   UpdateObligationStatusSchema,
 } from '../obligation/domain/models/obligationModel';
 
@@ -15,14 +16,18 @@ const registry = new OpenAPIRegistry();
 const ErrorResponseSchema = registry.register(
   'ErrorResponse',
   z.object({
+    statusCode: z.number().optional(),
+    status: z.string().optional(),
     message: z.string(),
     error: z.string().optional(),
-    statusCode: z.number().optional(),
+    details: z.record(z.string(), z.unknown()).optional(),
+    issues: z.array(z.unknown()).optional(),
   }),
 );
 
-registry.register('Obligation', ObligationSchema);
 registry.register('CreateObligationRequest', CreateObligationSchema);
+registry.register('UpdateObligationRequest', UpdateObligationSchema);
+registry.register('ObligationResponse', ObligationResponseSchema);
 registry.register('UpdateObligationStatusRequest', UpdateObligationStatusSchema);
 
 registry.registerPath({
@@ -37,7 +42,7 @@ registry.registerPath({
       description: 'Obligation found.',
       content: {
         'application/json': {
-          schema: ObligationSchema,
+          schema: ObligationResponseSchema,
         },
       },
     },
@@ -71,7 +76,7 @@ registry.registerPath({
       description: 'Obligation created.',
       content: {
         'application/json': {
-          schema: ObligationSchema,
+          schema: ObligationResponseSchema,
         },
       },
     },
@@ -96,7 +101,7 @@ registry.registerPath({
       required: true,
       content: {
         'application/json': {
-          schema: ObligationSchema,
+          schema: UpdateObligationSchema,
         },
       },
     },
@@ -106,7 +111,7 @@ registry.registerPath({
       description: 'Obligation updated.',
       content: {
         'application/json': {
-          schema: ObligationSchema,
+          schema: ObligationResponseSchema,
         },
       },
     },
@@ -149,7 +154,7 @@ registry.registerPath({
       description: 'Obligation status updated.',
       content: {
         'application/json': {
-          schema: ObligationSchema,
+          schema: ObligationResponseSchema,
         },
       },
     },
