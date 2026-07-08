@@ -47,6 +47,9 @@ export class ObligationPersistence {
   @Column()
   requiresDocument!: boolean;
 
+  @Column({ nullable: true })
+  documentUrl!: string | null;
+
   @Column()
   companyTaxId!: string;
 

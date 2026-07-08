@@ -1,4 +1,3 @@
-import type { Obligation } from '@repo/types';
 import { ObligationEntity } from '../../domain/obligation.entity';
 import { ObligationPersistence } from './obligation.persistence';
 
@@ -13,6 +12,7 @@ export class ObligationMapper {
       dueDate: row.dueDate,
       owner: row.owner,
       requiresDocument: row.requiresDocument,
+      documentUrl: row.documentUrl,
       companyTaxId: row.companyTaxId,
     });
   }
@@ -29,12 +29,9 @@ export class ObligationMapper {
     row.dueDate = obligation.dueDate;
     row.owner = obligation.owner;
     row.requiresDocument = obligation.requiresDocument;
+    row.documentUrl = obligation.documentUrl ?? null;
     row.companyTaxId = obligation.companyTaxId;
 
     return row;
-  }
-
-  static toDTO(row: ObligationPersistence): Obligation {
-    return this.toDomain(row).toDTO();
   }
 }

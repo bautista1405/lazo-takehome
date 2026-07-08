@@ -1,7 +1,13 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { OBLIGATION_REPOSITORY } from '../ports/obligation.token';
 import type { IObligationRepository } from '../ports/obligation-repository.interface';
 import { ObligationEntity } from '../../domain/obligation.entity';
+import { ObligationDomainError } from '../../domain/obligation.errors';
 import { Obligation } from '@repo/types';
 
 @Injectable()
@@ -48,12 +54,32 @@ export class ObligationService {
     return 'Obligation deleted';
   }
 
-  async updateStatus(id: string, status: Obligation['status']): Promise<ObligationEntity> {
-    const obligation = await this.obligationRepository.updateStatus(id, status);
+  async updateStatus(
+    id: string,
+    status: Obligation['status'],
+  ): Promise<ObligationEntity> {
+    const obligation = await this.mapDomainErrors(() =>
+      this.obligationRepository.updateStatus(id, status),
+    );
 
     if (!obligation) {
       throw new NotFoundException('Obligation not found');
     }
     return obligation;
+  }
+
+  private async mapDomainErrors<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error instanceof ObligationDomainError) {
+        throw new BadRequestException({
+          statusCode: 400,
+          ...error.toResponse(),
+        });
+      }
+
+      throw error;
+    }
   }
 }

@@ -54,15 +54,22 @@ const ObligationObjectSchema = z.object({
     description: 'Whether submission requires an attached document.',
     example: true,
   }),
+  documentUrl: z
+    .url()
+    .nullable()
+    .optional()
+    .openapi({
+      description:
+        'URL for the supporting document. Required before submitting when requiresDocument is true.',
+      example: 'https://example.com/documents/annual-report.pdf',
+    }),
   companyTaxId: z.string().min(4).openapi({
     description: 'Sensitive tax identifier. Store full value; mask in reads.',
     example: '12-3456789',
   }),
 });
 
-export const ObligationSchema = ObligationObjectSchema.openapi('Obligation', {
-  description: 'Compliance obligation API contract.',
-});
+export const ObligationSchema = ObligationObjectSchema;
 
 export const CreateObligationSchema = ObligationSchema.omit({ id: true }).openapi(
   'CreateObligationRequest',
@@ -70,6 +77,39 @@ export const CreateObligationSchema = ObligationSchema.omit({ id: true }).openap
     description: 'Request body for creating a compliance obligation.',
   },
 );
+
+export const UpdateObligationSchema = CreateObligationSchema.omit({
+  status: true,
+})
+  .partial()
+  .strict()
+  .openapi('UpdateObligationRequest', {
+    description:
+      'Request body for editing obligation details. Status changes must use the status endpoint.',
+  });
+
+export const ObligationResponseSchema = ObligationSchema.omit({
+  companyTaxId: true,
+})
+  .extend({
+    maskedCompanyTaxId: z.string().openapi({
+      description:
+        'Masked tax identifier. The backend never returns the full value in read responses.',
+      example: '**-***6789',
+    }),
+    overdue: z.boolean().openapi({
+      description: 'Whether the obligation is past due and not done.',
+      example: false,
+    }),
+    allowedTransitions: z.array(ObligationStatusSchema).openapi({
+      description:
+        'Status transitions currently allowed by the backend state machine.',
+      example: ['in_progress'],
+    }),
+  })
+  .openapi('ObligationResponse', {
+    description: 'Public obligation API response with sensitive fields masked.',
+  });
 
 export const ObligationIdParamsSchema = z
   .object({
@@ -87,6 +127,8 @@ export const UpdateObligationStatusSchema = z
 
 export type ObligationModel = z.infer<typeof ObligationSchema>;
 export type CreateObligationModel = z.infer<typeof CreateObligationSchema>;
+export type UpdateObligationModel = z.infer<typeof UpdateObligationSchema>;
+export type ObligationResponseModel = z.infer<typeof ObligationResponseSchema>;
 export type UpdateObligationStatusModel = z.infer<
   typeof UpdateObligationStatusSchema
 >;

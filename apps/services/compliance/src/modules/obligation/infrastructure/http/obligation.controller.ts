@@ -9,11 +9,11 @@ import {
   Post,
 } from '@nestjs/common';
 import { ObligationService } from '../../application/services/obligation.service';
-import type { Obligation } from '@repo/types';
+import type { ObligationResponse } from '@repo/types';
 import { ObligationEntity } from '../../domain/obligation.entity';
 import {
   CreateObligationSchema,
-  ObligationSchema,
+  UpdateObligationSchema,
   UpdateObligationStatusSchema,
 } from '../../domain/models/obligationModel';
 import { z, ZodError } from 'zod';
@@ -40,19 +40,19 @@ export class ObligationController {
   @Get(':id')
   async get(
     @Param('id') id: string,
-  ): Promise<Obligation> {
+  ): Promise<ObligationResponse> {
     const entity = await this.obligationService.getById(id);
-    return entity.toDTO();
+    return entity.toResponse();
   }
 
   @Post()
   async create(
     @Body() body: unknown,
-  ): Promise<Obligation> {
+  ): Promise<ObligationResponse> {
     const obligation = parseBody(CreateObligationSchema, body);
     const entity = ObligationEntity.create(obligation);
     const created = await this.obligationService.create(entity);
-    return created.toDTO();
+    return created.toResponse();
   }
 
   @Delete(':id')
@@ -60,30 +60,31 @@ export class ObligationController {
     @Param('id') id: string,
   ): Promise<string> {
     await this.obligationService.delete(id);
-    return 'Obligation deleted'
+    return 'Obligation deleted';
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() body: unknown,
-  ): Promise<Obligation> {
-    const obligation = parseBody(ObligationSchema, body);
-    const entity = ObligationEntity.from({ ...obligation, id });
+  ): Promise<ObligationResponse> {
+    const updates = parseBody(UpdateObligationSchema, body);
+    const existing = await this.obligationService.getById(id);
+    const entity = existing.updateDetails(updates);
     const updated = await this.obligationService.update(id, entity);
-    return updated.toDTO();
+    return updated.toResponse();
   }
 
   @Patch(':id/status')
   async updateStatus(
     @Param('id') id: string,
     @Body() body: unknown,
-  ): Promise<Obligation> {
+  ): Promise<ObligationResponse> {
     const { status: obligationStatus } = parseBody(
       UpdateObligationStatusSchema,
       body,
     );
-    const entity =  await this.obligationService.updateStatus(id, obligationStatus);
-    return entity.toDTO();
+    const entity = await this.obligationService.updateStatus(id, obligationStatus);
+    return entity.toResponse();
   }
 }
