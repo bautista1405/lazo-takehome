@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ObligationModule } from './modules/obligation/obligation.module';
-import { OpenApiController } from './openapi.controller';
+import { OpenApiModule } from './modules/openapi/openapi.module';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { OpenApiController } from './openapi.controller';
       synchronize: process.env.TYPEORM_SYNCHRONIZE !== 'false',
     }),
     ObligationModule,
+    OpenApiModule,
   ],
-  controllers: [OpenApiController],
 })
 export class AppModule {}
