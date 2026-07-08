@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: compliance-api
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter compliance build
+    startCommand: node apps/services/compliance/dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: compliance-db
+          property: connectionString
+
+databases:
+  - name: compliance-db
+    plan: free
+    databaseName: compliance
+    user: compliance
