@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import type {
+  BlockedObligationTransition,
   Obligation,
   ObligationResponse,
   ObligationStatus,
@@ -14,12 +15,13 @@ import type {
   UpdateObligationModel,
 } from './models/obligationModel';
 
-const validTransitions: Record<ObligationStatus, readonly ObligationStatus[]> = {
-  pending: ['in_progress'],
-  in_progress: ['submitted', 'pending'],
-  submitted: ['done', 'in_progress'],
-  done: ['in_progress'],
-};
+const validTransitions: Record<ObligationStatus, readonly ObligationStatus[]> =
+  {
+    pending: ['in_progress'],
+    in_progress: ['submitted', 'pending'],
+    submitted: ['done', 'in_progress'],
+    done: ['in_progress'],
+  };
 
 export class ObligationEntity {
   private constructor(
@@ -27,10 +29,7 @@ export class ObligationEntity {
     private readonly statusHistory: ObligationStatusChange[] = [],
   ) {}
 
-  static from(
-    props: Obligation,
-    statusHistory: ObligationStatusChange[] = [],
-  ) {
+  static from(props: Obligation, statusHistory: ObligationStatusChange[] = []) {
     return new ObligationEntity(props, statusHistory);
   }
 
@@ -38,6 +37,7 @@ export class ObligationEntity {
     return new ObligationEntity({
       ...props,
       id: randomUUID(),
+      status: 'pending',
       version: 1,
     });
   }
@@ -54,6 +54,7 @@ export class ObligationEntity {
       maskedCompanyTaxId: maskCompanyTaxId(companyTaxId),
       overdue: this.isOverdue(now),
       allowedTransitions: this.allowedTransitions(),
+      blockedTransitions: this.blockedTransitions(),
       statusHistory: this.statusHistory,
     };
   }
@@ -63,12 +64,21 @@ export class ObligationEntity {
   }
 
   updateDetails(updates: UpdateObligationModel): ObligationEntity {
-    const { expectedVersion: _expectedVersion, ...changes } = updates;
-
-    return new ObligationEntity({
+    const { expectedVersion, ...changes } = updates;
+    void expectedVersion;
+    const nextProps = {
       ...this.props,
       ...changes,
-    }, this.statusHistory);
+    };
+
+    if (
+      nextProps.status === 'submitted' &&
+      !hasRequiredDocument(nextProps.requiresDocument, nextProps.documentUrl)
+    ) {
+      throw new DocumentRequiredForSubmissionError();
+    }
+
+    return new ObligationEntity(nextProps, this.statusHistory);
   }
 
   withStatus(status: Obligation['status']): ObligationEntity {
@@ -84,10 +94,13 @@ export class ObligationEntity {
       throw new DocumentRequiredForSubmissionError();
     }
 
-    return new ObligationEntity({
-      ...this.props,
-      status,
-    }, this.statusHistory);
+    return new ObligationEntity(
+      {
+        ...this.props,
+        status,
+      },
+      this.statusHistory,
+    );
   }
 
   canTransitionTo(status: ObligationStatus): boolean {
@@ -104,16 +117,33 @@ export class ObligationEntity {
     );
   }
 
+  blockedTransitions(): BlockedObligationTransition[] {
+    return validTransitions[this.props.status].flatMap((status) => {
+      if (status === 'submitted' && !this.hasRequiredDocument()) {
+        return [{ status, reason: 'document_required' }];
+      }
+
+      return [];
+    });
+  }
+
   private hasRequiredDocument(): boolean {
-    return (
-      !this.props.requiresDocument ||
-      Boolean(this.props.documentUrl?.trim())
+    return hasRequiredDocument(
+      this.props.requiresDocument,
+      this.props.documentUrl,
     );
   }
 
   private isValidStatusStep(status: ObligationStatus): boolean {
     return validTransitions[this.props.status].includes(status);
   }
+}
+
+function hasRequiredDocument(
+  requiresDocument: boolean,
+  documentUrl: string | null | undefined,
+): boolean {
+  return !requiresDocument || Boolean(documentUrl?.trim());
 }
 
 function maskCompanyTaxId(companyTaxId: string): string {

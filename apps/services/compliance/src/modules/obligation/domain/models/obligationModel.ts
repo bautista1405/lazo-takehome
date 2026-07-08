@@ -1,5 +1,6 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import type {
+  BlockedObligationTransition,
   ObligationStatus,
   ObligationStatusChange,
   ObligationType,
@@ -8,25 +9,29 @@ import { z } from 'zod';
 
 extendZodWithOpenApi(z);
 
+const obligationTypes = [
+  'annual_report',
+  'franchise_tax',
+  'boi_report',
+  'registered_agent_renewal',
+] as const satisfies readonly [ObligationType, ...ObligationType[]];
+
+const obligationStatuses = [
+  'pending',
+  'in_progress',
+  'submitted',
+  'done',
+] as const satisfies readonly [ObligationStatus, ...ObligationStatus[]];
+
 export const ObligationTypeSchema = z
-  .enum([
-    'annual_report',
-    'franchise_tax',
-    'boi_report',
-    'registered_agent_renewal',
-  ] satisfies [ObligationType, ...ObligationType[]])
+  .enum(obligationTypes)
   .openapi('ObligationType', {
     description: 'Kind of compliance obligation being tracked.',
     example: 'annual_report',
   });
 
 export const ObligationStatusSchema = z
-  .enum([
-    'pending',
-    'in_progress',
-    'submitted',
-    'done',
-  ] satisfies [ObligationStatus, ...ObligationStatus[]])
+  .enum(obligationStatuses)
   .openapi('ObligationStatus', {
     description: 'Current lifecycle status of the obligation.',
     example: 'pending',
@@ -50,28 +55,28 @@ const ObligationObjectSchema = z.object({
     example: 'Submit the annual report before the state deadline.',
   }),
   status: ObligationStatusSchema,
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).openapi({
-    description: 'Due date in YYYY-MM-DD format.',
-    example: '2026-08-15',
-    format: 'date',
-  }),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .openapi({
+      description: 'Due date in YYYY-MM-DD format.',
+      example: '2026-08-15',
+      format: 'date',
+    }),
   owner: z.string().min(1).openapi({
     description: 'Responsible person or team.',
     example: 'Legal Ops',
   }),
   requiresDocument: z.boolean().openapi({
-    description: 'Whether submission requires an attached document.',
+    description:
+      'Whether this obligation is expected to have supporting evidence.',
     example: true,
   }),
-  documentUrl: z
-    .url()
-    .nullable()
-    .optional()
-    .openapi({
-      description:
-        'URL for the supporting document. Required before submitting when requiresDocument is true.',
-      example: 'https://example.com/documents/annual-report.pdf',
-    }),
+  documentUrl: z.url().nullable().optional().openapi({
+    description:
+      'URL for the supporting document. Required before submitting when requiresDocument is true.',
+    example: 'https://example.com/documents/annual-report.pdf',
+  }),
   companyTaxId: z.string().min(4).openapi({
     description: 'Sensitive tax identifier. Store full value; mask in reads.',
     example: '12-3456789',
@@ -82,9 +87,11 @@ export const ObligationSchema = ObligationObjectSchema;
 
 export const CreateObligationSchema = ObligationSchema.omit({
   id: true,
+  status: true,
   version: true,
 }).openapi('CreateObligationRequest', {
-  description: 'Request body for creating a compliance obligation.',
+  description:
+    'Request body for creating a compliance obligation. New obligations start as pending.',
 });
 
 const ExpectedVersionSchema = z.number().int().positive().openapi({
@@ -93,9 +100,7 @@ const ExpectedVersionSchema = z.number().int().positive().openapi({
   example: 1,
 });
 
-const UpdateObligationFieldsSchema = CreateObligationSchema.omit({
-  status: true,
-}).partial();
+const UpdateObligationFieldsSchema = CreateObligationSchema.partial();
 
 export const UpdateObligationSchema = UpdateObligationFieldsSchema.extend({
   expectedVersion: ExpectedVersionSchema,
@@ -133,6 +138,19 @@ export const ObligationStatusChangeSchema = z
     description: 'Audit entry for a persisted obligation status transition.',
   });
 
+export const BlockedObligationTransitionSchema = z
+  .object({
+    status: ObligationStatusSchema,
+    reason: z.literal('document_required').openapi({
+      description: 'Machine-readable reason why the transition is blocked.',
+      example: 'document_required',
+    }),
+  } satisfies Record<keyof BlockedObligationTransition, z.ZodType>)
+  .openapi('BlockedObligationTransition', {
+    description:
+      'Backend-owned transition that is visible but currently blocked.',
+  });
+
 export const ObligationResponseSchema = ObligationSchema.omit({
   companyTaxId: true,
 })
@@ -150,6 +168,11 @@ export const ObligationResponseSchema = ObligationSchema.omit({
       description:
         'Status transitions currently allowed by the backend state machine.',
       example: ['in_progress'],
+    }),
+    blockedTransitions: z.array(BlockedObligationTransitionSchema).openapi({
+      description:
+        'Transitions intentionally blocked by backend business rules, including the reason.',
+      example: [{ status: 'submitted', reason: 'document_required' }],
     }),
     statusHistory: z.array(ObligationStatusChangeSchema).openapi({
       description: 'Persisted status-change audit trail for this obligation.',

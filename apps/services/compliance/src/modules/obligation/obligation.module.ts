@@ -4,10 +4,16 @@ import { ObligationController } from './infrastructure/http/obligation.controlle
 import { ObligationService } from './application/services/obligation.service';
 import { OBLIGATION_REPOSITORY } from './application/ports/obligation.token';
 import { ObligationPersistence } from './infrastructure/persistence/obligation.persistence';
+import { ObligationStatusChangePersistence } from './infrastructure/persistence/obligation-status-change.persistence';
 import { TypeOrmObligationRepository } from './infrastructure/persistence/obligation.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ObligationPersistence])],
+  imports: [
+    TypeOrmModule.forFeature([
+      ObligationPersistence,
+      ObligationStatusChangePersistence,
+    ]),
+  ],
   controllers: [ObligationController],
   providers: [
     ObligationService,

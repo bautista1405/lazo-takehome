@@ -21,13 +21,31 @@ const baseObligation = (overrides: Partial<Obligation> = {}): Obligation => ({
 });
 
 describe('ObligationEntity', () => {
-  it('blocks submitted status when a required document is missing', () => {
+  it('blocks submitted status when document evidence is missing', () => {
     const obligation = ObligationEntity.from(baseObligation());
 
     expect(() => obligation.withStatus('submitted')).toThrow(
       DocumentRequiredForSubmissionError,
     );
     expect(obligation.allowedTransitions()).not.toContain('submitted');
+    expect(obligation.blockedTransitions()).toEqual([
+      {
+        status: 'submitted',
+        reason: 'document_required',
+      },
+    ]);
+  });
+
+  it('allows submitted status without document evidence when it is not required', () => {
+    const obligation = ObligationEntity.from(
+      baseObligation({
+        requiresDocument: false,
+        documentUrl: null,
+      }),
+    );
+
+    expect(obligation.withStatus('submitted').toDTO().status).toBe('submitted');
+    expect(obligation.allowedTransitions()).toContain('submitted');
   });
 
   it('reports invalid status transitions separately from document failures', () => {
@@ -51,6 +69,22 @@ describe('ObligationEntity', () => {
 
     expect(obligation.withStatus('submitted').toDTO().status).toBe('submitted');
     expect(obligation.allowedTransitions()).toContain('submitted');
+  });
+
+  it('blocks removing document evidence from a submitted obligation', () => {
+    const obligation = ObligationEntity.from(
+      baseObligation({
+        status: 'submitted',
+        documentUrl: 'https://example.com/documents/annual-report.pdf',
+      }),
+    );
+
+    expect(() =>
+      obligation.updateDetails({
+        expectedVersion: 1,
+        documentUrl: null,
+      }),
+    ).toThrow(DocumentRequiredForSubmissionError);
   });
 
   it('masks company tax id in public responses', () => {
