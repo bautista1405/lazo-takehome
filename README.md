@@ -45,7 +45,7 @@ pending → in_progress → submitted → done
 - **Invalid transitions are rejected with the list of allowed ones.** The API responds with `allowedTransitions` and `blockedTransitions` on every read; the frontend renders buttons from that — it contains no domain rules.
 - **Document-gated submission**: when `requiresDocument` is true, the obligation cannot reach `submitted` without a `documentUrl`. Blocked transitions carry a machine-readable `reason`.
 - **`overdue` is derived, never stored**: computed in the domain entity as a civil-date comparison (`dueDate < today in UTC`) for open statuses only (`pending`, `in_progress`).
-- **`companyTaxId` is sensitive**: stored complete, returned only masked (`**-***6789`), never logged.
+- **`companyTaxId` is sensitive**: stored complete, returned only masked (`**-***6789`), never logged. Request logs are structured (pino) with `companyTaxId` redacted, and a test proves the full value cannot reach log output.
 - **Audit trail**: every status change is recorded (from → to, when) in the same transaction as the change itself. The detail view shows the history.
 - **Concurrency**: optimistic locking. Every mutation requires `expectedVersion`; a stale version gets `409 Conflict` and the UI asks the user to refresh.
 
@@ -71,7 +71,7 @@ pnpm --filter compliance seed
 ## Tests
 
 ```bash
-pnpm --filter compliance test        # domain + application behavior (state machine, doc-gate, masking, error mapping)
+pnpm --filter compliance test        # domain + application behavior (state machine, doc-gate, masking, error mapping, log redaction)
 pnpm --filter compliance test:e2e    # HTTP endpoints incl. version-conflict handling
 pnpm check-types                     # strict TypeScript across the monorepo
 ```
@@ -106,5 +106,4 @@ API_URL=https://<your-render-service>.onrender.com pnpm --filter compliance seed
 ## With more time
 
 - A frontend behavior test for the transition flow (blocked submit button → attach document → submit).
-- Structured logs (pino) with a redaction test proving the tax ID never reaches log output.
 - Replace `synchronize` with explicit migrations.

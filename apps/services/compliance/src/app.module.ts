@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './modules/health/health.module';
+import { loggerConfig } from './modules/logging/logging.config';
 import { ObligationModule } from './modules/obligation/obligation.module';
 import { OpenApiModule } from './modules/openapi/openapi.module';
 
-function buildDatabaseOptions(): TypeOrmModuleOptions {
+function databaseConfig(): TypeOrmModuleOptions {
   const connection = process.env.DATABASE_URL
     ? {
         url: process.env.DATABASE_URL,
@@ -29,7 +31,8 @@ function buildDatabaseOptions(): TypeOrmModuleOptions {
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(buildDatabaseOptions()),
+    LoggerModule.forRoot(loggerConfig),
+    TypeOrmModule.forRoot(databaseConfig()),
     HealthModule,
     ObligationModule,
     OpenApiModule,
