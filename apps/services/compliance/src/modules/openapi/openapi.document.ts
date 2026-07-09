@@ -12,6 +12,34 @@ import {
 } from '../obligation/domain/models/obligationModel';
 
 const registry = new OpenAPIRegistry();
+const LOCAL_OPENAPI_SERVER_URL = 'http://localhost:3002';
+
+function stripTrailingSlash(url: string): string {
+  const normalized = url.trim().replace(/\/+$/, '');
+
+  return normalized === '' ? '/' : normalized;
+}
+
+export function resolveOpenApiServerUrl(
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const configuredUrl =
+    env.OPENAPI_SERVER_URL ?? env.COMPLIANCE_API_URL ?? env.RENDER_EXTERNAL_URL;
+
+  if (configuredUrl?.trim()) {
+    return stripTrailingSlash(configuredUrl);
+  }
+
+  if (env.RENDER_EXTERNAL_HOSTNAME?.trim()) {
+    return `https://${stripTrailingSlash(env.RENDER_EXTERNAL_HOSTNAME)}`;
+  }
+
+  if (env.NODE_ENV === 'production') {
+    return '/';
+  }
+
+  return LOCAL_OPENAPI_SERVER_URL;
+}
 
 const ErrorResponseSchema = registry.register(
   'ErrorResponse',
@@ -223,7 +251,7 @@ export function generateOpenApiDocument(): unknown {
     },
     servers: [
       {
-        url: 'http://localhost:3002',
+        url: resolveOpenApiServerUrl(),
       },
     ],
   });
