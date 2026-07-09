@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "globalEnv": ["COMPLIANCE_API_URL"],
+  "globalPassThroughEnv": ["CI"],
   "ui": "tui",
   "tasks": {
     "build": {
