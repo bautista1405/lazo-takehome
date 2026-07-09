@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ToastProps } from "../interfaces/components";
 
-const defaultDurationMs = 5000;
+const defaultDurationMs = 8000;
 
 export function Toast({
   durationMs = defaultDurationMs,
@@ -26,11 +26,11 @@ export function Toast({
   const toneClass =
     tone === "danger"
       ? "border-red-200 bg-red-50 text-red-900"
-      : "border-emerald-200 bg-emerald-50 text-emerald-900";
+      : "border-[color:var(--lazo-green)] bg-[var(--lazo-green-soft)] text-[#151517]";
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-2rem))] rounded-lg border p-4 shadow-xl ${toneClass}`}
+      className={`fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-2rem))] rounded-lg border p-4 shadow-[0_18px_44px_rgba(20,20,21,0.14)] ${toneClass}`}
       role="status"
     >
       <p className="text-sm font-semibold">{title}</p>

@@ -13,12 +13,10 @@ export function ObligationKpis({ dictionary, metrics }: ObligationKpisProps) {
       <MetricCard label={dictionary.total} value={metrics.total} />
       <MetricCard
         label={dictionary.overdue}
-        tone="danger"
         value={metrics.overdue}
       />
       <MetricCard
         label={dictionary.dueSoon}
-        tone="warning"
         value={metrics.dueSoon}
       />
       <MetricCard
@@ -31,14 +29,20 @@ export function ObligationKpis({ dictionary, metrics }: ObligationKpisProps) {
 
 function MetricCard({ label, tone = "neutral", value }: MetricCardProps) {
   const toneClass = {
-    danger: "text-red-600",
-    neutral: "text-neutral-950",
-    warning: "text-amber-600",
+    danger: "text-[#5f2cc5]",
+    neutral: "text-[color:var(--foreground)]",
+    warning: "text-[#5f2cc5]",
+  }[tone];
+  const accentClass = {
+    danger: "bg-[var(--lazo-violet)]",
+    neutral: "bg-[var(--lazo-violet)]",
+    warning: "bg-[var(--lazo-violet)]",
   }[tone];
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <p className="text-sm text-neutral-500">{label}</p>
+    <div className="rounded-lg border border-[color:var(--border)] bg-white p-4 shadow-[0_10px_24px_rgba(20,20,21,0.035)]">
+      <div className={`mb-3 h-1 w-8 rounded-full ${accentClass}`} />
+      <p className="text-sm text-[color:var(--muted)]">{label}</p>
       <p className={`mt-2 text-2xl font-semibold ${toneClass}`}>{value}</p>
     </div>
   );

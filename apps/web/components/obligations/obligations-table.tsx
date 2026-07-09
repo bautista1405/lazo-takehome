@@ -39,15 +39,15 @@ export function ObligationsTable({
           <TableBody>
             {obligations.map((obligation) => (
               <TableRow
-                className={`transition hover:bg-neutral-50 ${
+                className={`transition hover:bg-[var(--lazo-blue-soft)] ${
                   obligation.overdue ? "bg-red-50/50" : ""
                 }`}
                 key={obligation.id}
               >
-                <TableCell className="min-w-64 font-medium text-neutral-950">
+                <TableCell className="min-w-64 font-medium text-[color:var(--foreground)]">
                   <div className="grid gap-1">
                     <span>{obligation.title}</span>
-                    <span className="line-clamp-2 text-xs font-normal leading-5 text-neutral-500">
+                    <span className="line-clamp-2 text-xs font-normal leading-5 text-[color:var(--muted)]">
                       {obligation.description}
                     </span>
                   </div>
@@ -68,7 +68,6 @@ export function ObligationsTable({
                       className="w-[min(760px,calc(100vw-2rem))]"
                       closeLabel={dictionary.close}
                       title={dictionary.edit}
-                      triggerClassName="min-h-8 px-2.5 text-xs"
                       triggerLabel={dictionary.editDetails}
                     >
                       <ObligationForm
@@ -81,7 +80,6 @@ export function ObligationsTable({
                     <Modal
                       closeLabel={dictionary.close}
                       title={dictionary.updateStatus}
-                      triggerClassName="min-h-8 px-2.5 text-xs"
                       triggerLabel={dictionary.updateStatus}
                       triggerVariant="primary"
                     >
@@ -95,7 +93,6 @@ export function ObligationsTable({
                       className="w-[min(460px,calc(100vw-2rem))]"
                       closeLabel={dictionary.close}
                       title={dictionary.deleteObligation}
-                      triggerClassName="min-h-8 px-2.5 text-xs"
                       triggerLabel={dictionary.delete}
                       triggerVariant="danger"
                     >
@@ -112,7 +109,7 @@ export function ObligationsTable({
           </TableBody>
         </Table>
       ) : (
-        <p className="p-4 text-sm text-neutral-500">
+        <p className="p-4 text-sm text-[color:var(--muted)]">
           {dictionary.noObligations}
         </p>
       )}

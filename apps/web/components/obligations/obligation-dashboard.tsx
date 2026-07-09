@@ -29,7 +29,10 @@ export function ObligationDashboard({
   const metrics = getMetrics(sortedObligations);
 
   return (
-    <main lang={locale} className="min-h-screen bg-white text-neutral-950">
+    <main
+      lang={locale}
+      className="min-h-screen bg-[var(--background)] text-[color:var(--foreground)]"
+    >
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
         <DashboardHeader
           dictionary={dictionary}
@@ -47,7 +50,7 @@ export function ObligationDashboard({
         <ObligationKpis dictionary={dictionary} metrics={metrics} />
 
         <Panel className="overflow-hidden">
-          <div className="flex flex-col gap-4 border-b border-neutral-200 px-4 py-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-4 border-b border-[color:var(--border)] px-4 py-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Modal
                 className="w-[min(760px,calc(100vw-2rem))]"

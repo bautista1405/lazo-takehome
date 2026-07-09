@@ -2,16 +2,14 @@
 
 import { useId, useRef, type MouseEvent } from "react";
 import type { ModalProps, ModalTriggerVariant } from "../interfaces/components";
+import { subtleActionClassName } from "./primitives";
 
 const triggerClasses: Record<ModalTriggerVariant, string> = {
-  danger:
-    "border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-red-700",
-  primary:
-    "border-neutral-950 bg-neutral-950 text-white hover:border-neutral-800 hover:bg-neutral-800",
-  secondary:
-    "border-neutral-200 bg-white text-neutral-950 hover:border-neutral-400",
+  danger: subtleActionClassName,
+  primary: subtleActionClassName,
+  secondary: subtleActionClassName,
   success:
-    "border-emerald-600 bg-emerald-600 text-white hover:border-emerald-700 hover:bg-emerald-700",
+    "inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-[color:var(--lazo-violet)] bg-[var(--lazo-violet)] px-3 text-sm font-medium text-white transition hover:border-[color:var(--lazo-violet-hover)] hover:bg-[var(--lazo-violet-hover)]",
 };
 
 export function Modal({
@@ -56,7 +54,7 @@ export function Modal({
   return (
     <>
       <button
-        className={`inline-flex min-h-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${triggerClasses[triggerVariant]} ${triggerClassName}`}
+        className={`${triggerClasses[triggerVariant]} justify-center disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${triggerClassName}`}
         onClick={openDialog}
         type="button"
       >
@@ -66,25 +64,28 @@ export function Modal({
       <dialog
         aria-describedby={description ? descriptionId : undefined}
         aria-labelledby={titleId}
-        className={`fixed left-1/2 top-1/2 m-0 ${widthClassName} max-w-none -translate-x-1/2 -translate-y-1/2 rounded-lg border border-neutral-200 bg-white p-0 text-neutral-950 shadow-2xl backdrop:bg-neutral-950/30 ${className}`}
+        className={`fixed left-1/2 top-1/2 m-0 ${widthClassName} max-w-none -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[color:var(--border)] bg-white p-0 text-[color:var(--foreground)] shadow-[0_24px_60px_rgba(20,20,21,0.18)] backdrop:bg-neutral-950/30 ${className}`}
         onClick={closeFromClick}
         ref={dialogRef}
       >
         <div className="grid max-h-[calc(100vh-2rem)] overflow-hidden">
-          <header className="flex items-start justify-between gap-4 border-b border-neutral-200 px-4 py-3">
+          <header className="flex items-start justify-between gap-4 border-b border-[color:var(--border)] bg-[var(--lazo-violet-soft)] px-4 py-3">
             <div className="grid gap-1">
               <h2 className="text-base font-semibold" id={titleId}>
                 {title}
               </h2>
               {description ? (
-                <p className="text-sm text-neutral-500" id={descriptionId}>
+                <p
+                  className="text-sm text-[color:var(--muted)]"
+                  id={descriptionId}
+                >
                   {description}
                 </p>
               ) : null}
             </div>
             <button
               aria-label={closeLabel}
-              className="inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-sm font-semibold text-neutral-500 transition hover:border-neutral-400 hover:text-neutral-950"
+              className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-[color:var(--lazo-violet-border)] bg-white text-sm font-semibold text-[color:var(--muted)] transition hover:border-[color:var(--lazo-violet)] hover:text-[color:var(--foreground)]"
               data-modal-close
               type="button"
             >

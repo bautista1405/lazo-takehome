@@ -9,7 +9,7 @@ export function DeleteObligationConfirmation({
 }: DeleteObligationConfirmationProps) {
   return (
     <div className="grid gap-4">
-      <p className="text-sm leading-6 text-neutral-600">
+      <p className="text-sm leading-6 text-[color:var(--muted)]">
         {dictionary.deleteConfirmation}
       </p>
       <div className="rounded-md border border-red-200 bg-red-50 p-3">
@@ -19,7 +19,7 @@ export function DeleteObligationConfirmation({
         </p>
       </div>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-neutral-200 pt-4 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-[color:var(--border)] pt-4 sm:flex-row sm:justify-end">
         <SecondaryButton data-modal-close type="button">
           {dictionary.no}
         </SecondaryButton>

@@ -112,7 +112,7 @@ export function ObligationForm({
           />
         </CompactField>
 
-        <label className="flex min-h-8 items-center gap-2 rounded-md border border-neutral-200 px-2.5 text-sm font-medium">
+        <label className="flex min-h-8 items-center gap-2 rounded-md border border-[color:var(--border)] px-2.5 text-sm font-medium">
           <input
             className="size-4 rounded border-neutral-300"
             defaultChecked={obligation?.requiresDocument ?? false}
@@ -138,7 +138,7 @@ export function ObligationForm({
         />
       </CompactField>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-neutral-200 pt-3 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-[color:var(--border)] pt-3 sm:flex-row sm:justify-end">
         <SecondaryButton data-modal-close type="button">
           {dictionary.cancel}
         </SecondaryButton>
@@ -162,11 +162,13 @@ function CompactField({
   label: string;
 }) {
   return (
-    <label className="grid gap-1 text-xs font-medium text-neutral-950">
+    <label className="grid gap-1 text-xs font-medium text-[color:var(--foreground)]">
       {label}
       {children}
       {hint ? (
-        <span className="text-xs font-normal text-neutral-500">{hint}</span>
+        <span className="text-xs font-normal text-[color:var(--muted)]">
+          {hint}
+        </span>
       ) : null}
     </label>
   );

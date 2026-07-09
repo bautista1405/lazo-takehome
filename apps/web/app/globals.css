@@ -2,10 +2,26 @@
 @source "../../../packages/ui";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --muted: #666666;
-  --border: #e5e5e5;
+  --background: #f6f8fa;
+  --foreground: #151517;
+  --muted: #8a8e93;
+  --border: #dedee1;
+  --lazo-surface: #ffffff;
+  --lazo-surface-muted: #eceff1;
+  --lazo-gray-hover: #e9e9e9;
+  --lazo-gray-border: #ababaf;
+  --lazo-violet: #a16dfc;
+  --lazo-violet-hover: #8e53f4;
+  --lazo-violet-soft: #f5efff;
+  --lazo-violet-border: #e9ddff;
+  --lazo-green: #caea2f;
+  --lazo-green-soft: #fcffec;
+  --lazo-blue: #9aa9f9;
+  --lazo-blue-soft: #f1f3ff;
+  --lazo-yellow: #f1d95a;
+  --lazo-yellow-soft: #fffbe7;
+  --lazo-pink: #f18de1;
+  --lazo-pink-soft: #fff0fd;
 }
 
 * {
@@ -38,11 +54,15 @@ textarea {
   font: inherit;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #000000;
+  outline: 2px solid var(--lazo-violet);
   outline-offset: 2px;
 }

@@ -1,5 +1,11 @@
 import { OBLIGATION_STATUSES } from "@repo/types";
-import { Button, Field, Panel, Select } from "@repo/ui/components/primitives";
+import {
+  Button,
+  Field,
+  Panel,
+  Select,
+  subtleActionClassName,
+} from "@repo/ui/components/primitives";
 import type {
   ObligationFilterPanelProps,
   ObligationFiltersProps,
@@ -26,7 +32,11 @@ export function ObligationFilterForm({
         />
       </Field>
       <Field label={dictionary.status}>
-        <Select defaultValue={filters.status ?? ""} name="status" className="h-8">
+        <Select
+          defaultValue={filters.status ?? ""}
+          name="status"
+          className="h-8"
+        >
           <option value="">{dictionary.allStatuses}</option>
           {OBLIGATION_STATUSES.map((option) => (
             <option key={option} value={option}>
@@ -37,10 +47,7 @@ export function ObligationFilterForm({
       </Field>
       <div className="flex items-center gap-2">
         <Button type="submit">{dictionary.filter}</Button>
-        <a
-          className="inline-flex min-h-9 items-center rounded-md border border-neutral-200 px-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:text-neutral-950"
-          href={dashboardHref({ locale })}
-        >
+        <a className={subtleActionClassName} href={dashboardHref({ locale })}>
           {dictionary.clear}
         </a>
       </div>
