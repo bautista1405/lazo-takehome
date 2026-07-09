@@ -138,6 +138,7 @@ i18n is es/en with plain dictionaries and a `locale` param, no i18n library.
 
 I used AI for: 
 
+- README.md
 - scaffolding Nest modules
 - Zod schemas with their OpenAPI metadata
 - Tailwind components 

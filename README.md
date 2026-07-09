@@ -87,7 +87,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs type checks, lint
 
 The web app calls the API exclusively from the server (RSC + Server Actions), so the API needs no CORS setup and its URL is never exposed to the browser.
 
-**API + database (Render):** [render.yaml](render.yaml) is a Render Blueprint that provisions the NestJS service and a free PostgreSQL instance wired together. In Render: _New → Blueprint → select this repo_. The free instance spins down when idle (first request takes ~30s) and the free database expires after 30 days — acceptable for a demo, documented trade-off.
+**API + database (Render):** [render.yaml](render.yaml) is a Render Blueprint that provisions the NestJS service and a free PostgreSQL instance wired together. In Render: _New → Blueprint → select this repo_. The free instance spins down when idle (first request takes ~30s).
 
 Swagger/OpenAPI uses the current production host by default when `NODE_ENV=production`. To force the exact public API URL shown in Swagger UI, set:
 
