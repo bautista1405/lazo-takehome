@@ -111,6 +111,8 @@ One detail: the status change revalidates the transition against the row *inside
 
 `companyTaxId` is stored complete. The system may need the real identifier to file or reconcile, but it never leaves the API complete: read responses replace it with `maskedCompanyTaxId` at the response boundary, and nothing logs it. The response schema doesn't even have a field for the raw value, so leaking it would require adding code.
 
+Request logging goes through pino with redaction paths for `companyTaxId` (top level, nested, request body). Nothing in the API logs obligation objects today, so redaction is the second net: if someone ever does, the field comes out as `[Redacted]` instead of the value. A test feeds an obligation through the same redaction config and asserts the real value never reaches the output. The health endpoint is excluded from request logs because Render pings it constantly and that is pure noise.
+
 ## Frontend
 
 Server Components fetch, Server Actions mutate, `revalidatePath` refreshes. The API is called from the server only. Its URL and any future credentials never reach the browser, and there's no CORS to configure because there's no cross origin call.
@@ -164,6 +166,8 @@ The part that needed correcting:
 
 5. **modularize dashboard components** It was one big file for the dashboard. It needed refactoring and modularization, in order to work and be readable. Also some ui/ux light work.
 
+6. **ui/ux polish** table with columns and actions, modals and toasts, search bar and filter buttons
+
 The pattern: AI output fails quiet, not loud. It compiles, it demos, and the bug is in the semantics. Every correction came from reading the code
 
 ## Build notes
@@ -174,3 +178,4 @@ Short ones, kept because they cost me real time:
 - In a pnpm workspace, extending `@repo/typescript-config` requires declaring it as a devDependency in that package. Being present in the workspace isn't enough. Resolution is per `package.json`.
 - `@repo/types` exports source (`./src/index.ts`), same as `@repo/ui`. No build step needed for internal packages; it would need `dist` and declaration files only if published.
 - First Render deploy failed with corepack's `Cannot find matching keyid`. Node 22.12 bundles a corepack that still carries npm's old registry signing key. Reproduced the exact build in a Docker container, bumped `NODE_VERSION` to 22.16, green.
+- The API logs a `pg` DeprecationWarning at boot ("Calling client.query() when the client is already executing a query"). Traced it with `--trace-deprecation`: it comes from TypeORM's `synchronize` schema builder, which introspects tables and enums with `Promise.all` on a single client. It goes away entirely on the production path where `synchronize` is off and migrations run instead. Only becomes a real problem on `pg@9`, and the project pins `^8`.

@@ -73,8 +73,13 @@ pnpm --filter compliance seed
 ```bash
 pnpm --filter compliance test        # domain + application behavior (state machine, doc-gate, masking, error mapping, log redaction)
 pnpm --filter compliance test:e2e    # HTTP endpoints incl. version-conflict handling
+pnpm --filter web test:e2e           # Playwright browser flow (requires Docker Postgres up)
 pnpm check-types                     # strict TypeScript across the monorepo
 ```
+
+The Playwright flow covers the document gate end to end through the real UI and API: create an obligation with `requiresDocument`, verify `submitted` is blocked with its reason, attach a document, verify the transition unlocks and persists, and check the full tax id never renders (only the masked value does). Playwright boots the API and web servers automatically; it reuses already-running dev servers outside CI.
+
+Known flakiness: against a long-running dev server the flow can occasionally fail on a race between the native `<dialog>` and the search input's URL cleanup (a debounced `router.replace` strips `?success=` about 300ms after every mutation, and that re-render can replace a freshly opened modal). If it fails locally, restart `pnpm dev` and run it again. Worth noting: the test surfaced real UI behavior that a component test would never have touched.
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs type checks, lint, both backend test suites and the full build on every push to `main` and every pull request, on the same Node version the API runs in production.
 
@@ -105,5 +110,5 @@ API_URL=https://<your-render-service>.onrender.com pnpm --filter compliance seed
 
 ## With more time
 
-- A frontend behavior test for the transition flow (blocked submit button → attach document → submit).
+- Run the Playwright flow in CI (needs a Postgres service container and browser install; kept local-only until it earns its stability).
 - Replace `synchronize` with explicit migrations.
