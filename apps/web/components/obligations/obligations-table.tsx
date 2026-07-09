@@ -1,3 +1,4 @@
+import { EyeIcon, PencilIcon, TrashIcon } from "@repo/ui/components/icons";
 import { Modal } from "@repo/ui/components/modal";
 import {
   Table,
@@ -10,6 +11,8 @@ import {
 import type { ObligationTableProps } from "../../interfaces/obligations";
 import { formatDate } from "../../utils/obligations";
 import { DeleteObligationConfirmation } from "./delete-obligation-confirmation";
+import { DocumentStatus } from "./document-status";
+import { ObligationDetail } from "./obligation-detail";
 import { ObligationForm } from "./obligation-form";
 import { ObligationStatusForm } from "./obligation-status-form";
 import { StatusBadge } from "./status-badge";
@@ -30,6 +33,7 @@ export function ObligationsTable({
               <TableHeaderCell>{dictionary.status}</TableHeaderCell>
               <TableHeaderCell>{dictionary.dueDate}</TableHeaderCell>
               <TableHeaderCell>{dictionary.owner}</TableHeaderCell>
+              <TableHeaderCell>{dictionary.document}</TableHeaderCell>
               <TableHeaderCell>{dictionary.maskedCompanyTaxId}</TableHeaderCell>
               <TableHeaderCell className="text-right">
                 {dictionary.actions}
@@ -61,14 +65,46 @@ export function ObligationsTable({
                 </TableCell>
                 <TableCell>{formatDate(obligation.dueDate, locale)}</TableCell>
                 <TableCell>{obligation.owner}</TableCell>
+                <TableCell>
+                  <DocumentStatus
+                    dictionary={dictionary}
+                    obligation={obligation}
+                  />
+                </TableCell>
                 <TableCell>{obligation.maskedCompanyTaxId}</TableCell>
                 <TableCell className="min-w-84">
                   <div className="flex flex-wrap justify-end gap-2">
                     <Modal
+                      className="w-[min(920px,calc(100vw-2rem))]"
+                      closeLabel={dictionary.close}
+                      title={dictionary.detail}
+                      triggerClassName="w-10 px-0"
+                      triggerLabel={
+                        <>
+                          <EyeIcon />
+                          <span className="sr-only">{dictionary.view}</span>
+                        </>
+                      }
+                    >
+                      <ObligationDetail
+                        dictionary={dictionary}
+                        locale={locale}
+                        obligation={obligation}
+                      />
+                    </Modal>
+                    <Modal
                       className="w-[min(760px,calc(100vw-2rem))]"
                       closeLabel={dictionary.close}
                       title={dictionary.edit}
-                      triggerLabel={dictionary.editDetails}
+                      triggerClassName="w-10 px-0"
+                      triggerLabel={
+                        <>
+                          <PencilIcon />
+                          <span className="sr-only">
+                            {dictionary.editDetails}
+                          </span>
+                        </>
+                      }
                     >
                       <ObligationForm
                         dictionary={dictionary}
@@ -93,7 +129,13 @@ export function ObligationsTable({
                       className="w-[min(460px,calc(100vw-2rem))]"
                       closeLabel={dictionary.close}
                       title={dictionary.deleteObligation}
-                      triggerLabel={dictionary.delete}
+                      triggerClassName="w-10 px-0"
+                      triggerLabel={
+                        <>
+                          <TrashIcon />
+                          <span className="sr-only">{dictionary.delete}</span>
+                        </>
+                      }
                       triggerVariant="danger"
                     >
                       <DeleteObligationConfirmation

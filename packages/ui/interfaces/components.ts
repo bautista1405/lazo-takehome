@@ -30,7 +30,7 @@ export interface ModalProps {
   description?: string;
   title: string;
   triggerClassName?: string;
-  triggerLabel: string;
+  triggerLabel: ReactNode;
   triggerVariant?: ModalTriggerVariant;
 }
 

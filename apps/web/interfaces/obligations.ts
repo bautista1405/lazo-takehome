@@ -89,9 +89,8 @@ export interface ObligationFormProps {
   obligation?: ObligationResponse;
 }
 
-export interface ObligationStatusActionsProps {
+export interface DocumentStatusProps {
   dictionary: Dictionary;
-  locale: Locale;
   obligation: ObligationResponse;
 }
 
