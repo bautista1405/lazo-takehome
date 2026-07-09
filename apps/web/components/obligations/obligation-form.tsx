@@ -1,10 +1,11 @@
 import { OBLIGATION_TYPES } from "@repo/types";
+import type { ReactNode } from "react";
 import {
   Button,
-  Field,
   Input,
-  Panel,
   Select,
+  SecondaryButton,
+  SuccessButton,
   Textarea,
 } from "@repo/ui/components/primitives";
 import {
@@ -12,6 +13,9 @@ import {
   updateObligationAction,
 } from "../../actions/obligations";
 import type { ObligationFormProps } from "../../interfaces/obligations";
+
+const compactInputClassName = "min-h-8 px-2.5";
+const compactTextareaClassName = "min-h-14 max-h-14 resize-none px-2.5 py-1.5";
 
 export function ObligationForm({
   dictionary,
@@ -23,80 +27,92 @@ export function ObligationForm({
   const formId = isEdit ? `edit-${obligation?.id}` : "create-obligation";
 
   return (
-    <Panel className="p-5">
-      <h2 className="text-base font-semibold">
-        {isEdit ? dictionary.edit : dictionary.create}
-      </h2>
-      <form
-        action={isEdit ? updateObligationAction : createObligationAction}
-        className="mt-4 grid gap-4"
-      >
-        <input name="locale" type="hidden" value={locale} />
-        {isEdit && obligation ? (
-          <>
-            <input name="id" type="hidden" value={obligation.id} />
-            <input
-              name="expectedVersion"
-              type="hidden"
-              value={obligation.version}
-            />
-          </>
-        ) : null}
+    <form
+      action={isEdit ? updateObligationAction : createObligationAction}
+      className="grid gap-3"
+    >
+      <input name="locale" type="hidden" value={locale} />
+      {isEdit && obligation ? (
+        <>
+          <input name="id" type="hidden" value={obligation.id} />
+          <input
+            name="expectedVersion"
+            type="hidden"
+            value={obligation.version}
+          />
+        </>
+      ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={dictionary.type}>
-            <Select
-              defaultValue={obligation?.type ?? "annual_report"}
-              name="type"
-              required
-            >
-              {OBLIGATION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {dictionary.types[type]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field label={dictionary.dueDate}>
-            <Input
-              defaultValue={obligation?.dueDate}
-              id={`${formId}-due-date`}
-              name="dueDate"
-              required
-              type="date"
-            />
-          </Field>
-        </div>
-
-        <Field label={dictionary.titleField}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <CompactField label={dictionary.titleField}>
           <Input
+            className={compactInputClassName}
             defaultValue={obligation?.title}
             minLength={1}
             name="title"
             required
           />
-        </Field>
+        </CompactField>
 
-        <Field label={dictionary.description}>
-          <Textarea
-            defaultValue={obligation?.description}
-            minLength={1}
-            name="description"
-            required
-          />
-        </Field>
-
-        <Field label={dictionary.owner}>
+        <CompactField label={dictionary.owner}>
           <Input
+            className={compactInputClassName}
             defaultValue={obligation?.owner}
             minLength={1}
             name="owner"
             required
           />
-        </Field>
+        </CompactField>
 
-        <label className="flex items-center gap-3 rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium">
+        <CompactField label={dictionary.type}>
+          <Select
+            className={compactInputClassName}
+            defaultValue={obligation?.type ?? "annual_report"}
+            name="type"
+            required
+          >
+            {OBLIGATION_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {dictionary.types[type]}
+              </option>
+            ))}
+          </Select>
+        </CompactField>
+
+        <CompactField label={dictionary.dueDate}>
+          <Input
+            className={compactInputClassName}
+            defaultValue={obligation?.dueDate}
+            id={`${formId}-due-date`}
+            name="dueDate"
+            required
+            type="date"
+          />
+        </CompactField>
+      </div>
+
+      <CompactField label={dictionary.description}>
+        <Textarea
+          className={compactTextareaClassName}
+          defaultValue={obligation?.description}
+          minLength={1}
+          name="description"
+          required
+        />
+      </CompactField>
+
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-end">
+        <CompactField label={dictionary.documentUrl}>
+          <Input
+            className={compactInputClassName}
+            defaultValue={obligation?.documentUrl ?? ""}
+            name="documentUrl"
+            placeholder="https://example.com/document.pdf"
+            type="url"
+          />
+        </CompactField>
+
+        <label className="flex min-h-8 items-center gap-2 rounded-md border border-neutral-200 px-2.5 text-sm font-medium">
           <input
             className="size-4 rounded border-neutral-300"
             defaultChecked={obligation?.requiresDocument ?? false}
@@ -105,34 +121,53 @@ export function ObligationForm({
           />
           {dictionary.requiresDocument}
         </label>
+      </div>
 
-        <Field label={dictionary.documentUrl}>
-          <Input
-            defaultValue={obligation?.documentUrl ?? ""}
-            name="documentUrl"
-            placeholder="https://example.com/document.pdf"
-            type="url"
-          />
-        </Field>
+      <CompactField
+        hint={isEdit ? dictionary.taxIdEditHint : undefined}
+        label={dictionary.companyTaxId}
+      >
+        <Input
+          autoComplete="off"
+          className={compactInputClassName}
+          defaultValue=""
+          minLength={isEdit ? undefined : 4}
+          name="companyTaxId"
+          placeholder={isEdit ? obligation?.maskedCompanyTaxId : "12-3456789"}
+          required={!isEdit}
+        />
+      </CompactField>
 
-        <Field
-          hint={isEdit ? dictionary.taxIdEditHint : undefined}
-          label={dictionary.companyTaxId}
-        >
-          <Input
-            autoComplete="off"
-            defaultValue=""
-            minLength={isEdit ? undefined : 4}
-            name="companyTaxId"
-            placeholder={isEdit ? obligation?.maskedCompanyTaxId : "12-3456789"}
-            required={!isEdit}
-          />
-        </Field>
+      <div className="flex flex-col-reverse gap-2 border-t border-neutral-200 pt-3 sm:flex-row sm:justify-end">
+        <SecondaryButton data-modal-close type="button">
+          {dictionary.cancel}
+        </SecondaryButton>
+        {isEdit ? (
+          <Button type="submit">{dictionary.updateButton}</Button>
+        ) : (
+          <SuccessButton type="submit">{dictionary.createButton}</SuccessButton>
+        )}
+      </div>
+    </form>
+  );
+}
 
-        <Button type="submit">
-          {isEdit ? dictionary.updateButton : dictionary.createButton}
-        </Button>
-      </form>
-    </Panel>
+function CompactField({
+  children,
+  hint,
+  label,
+}: {
+  children: ReactNode;
+  hint?: string;
+  label: string;
+}) {
+  return (
+    <label className="grid gap-1 text-xs font-medium text-neutral-950">
+      {label}
+      {children}
+      {hint ? (
+        <span className="text-xs font-normal text-neutral-500">{hint}</span>
+      ) : null}
+    </label>
   );
 }

@@ -9,8 +9,7 @@ import type {
 import type { ApiError } from "../types/api";
 
 const API_BASE_URL =
-  process.env.COMPLIANCE_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:3002";
+  process.env.COMPLIANCE_API_URL?.replace(/\/$/, "") ?? "http://localhost:3002";
 
 export class ComplianceApiError extends Error {
   readonly response: ApiError;
@@ -53,6 +52,20 @@ export async function updateObligationStatus(
     method: "PATCH",
     body: JSON.stringify(body),
   });
+}
+
+export async function deleteObligation(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/obligation/${id}`, {
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new ComplianceApiError(await readErrorResponse(response));
+  }
 }
 
 export function toApiError(error: unknown): ApiError {

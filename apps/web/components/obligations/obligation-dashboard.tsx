@@ -1,18 +1,14 @@
 import { Panel } from "@repo/ui/components/primitives";
+import { Modal } from "@repo/ui/components/modal";
 import type { ObligationDashboardProps } from "../../interfaces/obligations";
 import {
   filterObligations,
   getMetrics,
-  selectObligation,
   sortObligationsByDueDate,
 } from "../../utils/obligations";
 import { DashboardAlerts } from "./dashboard-alerts";
 import { DashboardHeader } from "./dashboard-header";
-import { ObligationDetail } from "./obligation-detail";
-import {
-  ObligationFilterForm,
-  ObligationFilterPanel,
-} from "./obligation-filters";
+import { ObligationFilterForm } from "./obligation-filters";
 import { ObligationForm } from "./obligation-form";
 import { ObligationKpis } from "./obligation-kpis";
 import { ObligationsTable } from "./obligations-table";
@@ -24,18 +20,12 @@ export function ObligationDashboard({
   locale,
   obligations,
   query,
-  selectedId,
   status,
-  successMessage,
+  successNotification,
 }: ObligationDashboardProps) {
   const filters = { query, status };
   const sortedObligations = sortObligationsByDueDate(obligations);
   const filteredObligations = filterObligations(sortedObligations, filters);
-  const selectedObligation = selectObligation({
-    filteredObligations,
-    obligations: sortedObligations,
-    selectedId,
-  });
   const metrics = getMetrics(sortedObligations);
 
   return (
@@ -45,66 +35,46 @@ export function ObligationDashboard({
           dictionary={dictionary}
           filters={filters}
           locale={locale}
-          selectedId={selectedObligation?.id}
         />
 
         <DashboardAlerts
           apiError={apiError}
           dictionary={dictionary}
           errorMessage={errorMessage}
-          successMessage={successMessage}
+          successNotification={successNotification}
         />
 
         <ObligationKpis dictionary={dictionary} metrics={metrics} />
 
-        <div className="grid gap-4 lg:grid-cols-[420px_minmax(0,1fr)]">
-          <ObligationFilterPanel>
+        <Panel className="overflow-hidden">
+          <div className="flex flex-col gap-4 border-b border-neutral-200 px-4 py-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Modal
+                className="w-[min(760px,calc(100vw-2rem))]"
+                closeLabel={dictionary.close}
+                title={dictionary.create}
+                triggerLabel={dictionary.createNewObligation}
+                triggerVariant="success"
+              >
+                <ObligationForm
+                  dictionary={dictionary}
+                  locale={locale}
+                  mode="create"
+                />
+              </Modal>
+            </div>
             <ObligationFilterForm
               dictionary={dictionary}
               filters={filters}
               locale={locale}
             />
-            <ObligationsTable
-              dictionary={dictionary}
-              filters={filters}
-              locale={locale}
-              obligations={filteredObligations}
-              selectedId={selectedObligation?.id}
-            />
-          </ObligationFilterPanel>
-
-          <div className="grid gap-4">
-            {selectedObligation ? (
-              <ObligationDetail
-                dictionary={dictionary}
-                locale={locale}
-                obligation={selectedObligation}
-              />
-            ) : (
-              <Panel className="p-6">
-                <p className="text-sm text-neutral-500">
-                  {dictionary.noObligations}
-                </p>
-              </Panel>
-            )}
-
-            <div className="grid gap-4 xl:grid-cols-2">
-              <ObligationForm
-                dictionary={dictionary}
-                locale={locale}
-                mode="create"
-              />
-              {selectedObligation ? (
-                <ObligationForm
-                  dictionary={dictionary}
-                  locale={locale}
-                  mode="edit"
-                  obligation={selectedObligation}
-                />
-              ) : null}
-            </div>
           </div>
-        </div>
+          <ObligationsTable
+            dictionary={dictionary}
+            locale={locale}
+            obligations={filteredObligations}
+          />
+        </Panel>
       </div>
     </main>
   );

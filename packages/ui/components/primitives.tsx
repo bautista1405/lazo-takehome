@@ -9,33 +9,26 @@ import type {
   TextareaProps,
 } from "../interfaces/components";
 
-export function Panel({
-  children,
-  className = "",
-}: PanelProps) {
+export function Panel({ children, className = "" }: PanelProps) {
   return (
-    <section className={`rounded-lg border border-neutral-200 bg-white ${className}`}>
+    <section
+      className={`rounded-lg border border-neutral-200 bg-white ${className}`}
+    >
       {children}
     </section>
   );
 }
 
-export function Button({
-  className = "",
-  ...props
-}: ButtonProps) {
+export function Button({ className = "", ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex min-h-9 items-center justify-center rounded-md border border-neutral-950 bg-neutral-950 px-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${className}`}
+      className={`inline-flex min-h-8 items-center justify-center rounded-md border border-neutral-950 bg-neutral-950 px-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${className}`}
       {...props}
     />
   );
 }
 
-export function SecondaryButton({
-  className = "",
-  ...props
-}: ButtonProps) {
+export function SecondaryButton({ className = "", ...props }: ButtonProps) {
   return (
     <button
       className={`inline-flex min-h-9 items-center justify-center rounded-md border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-950 transition hover:border-neutral-400 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 ${className}`}
@@ -44,23 +37,34 @@ export function SecondaryButton({
   );
 }
 
-export function Input({
-  className = "",
-  ...props
-}: InputProps) {
+export function SuccessButton({ className = "", ...props }: ButtonProps) {
   return (
-    <input
-      className={`min-h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 ${className}`}
+    <button
+      className={`inline-flex min-h-9 items-center justify-center rounded-md border border-emerald-600 bg-emerald-600 px-3 text-sm font-medium text-white transition hover:border-emerald-700 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${className}`}
       {...props}
     />
   );
 }
 
-export function Select({
-  className = "",
-  children,
-  ...props
-}: SelectProps) {
+export function DangerButton({ className = "", ...props }: ButtonProps) {
+  return (
+    <button
+      className={`inline-flex min-h-9 items-center justify-center rounded-md border border-red-600 bg-red-600 px-3 text-sm font-medium text-white transition hover:border-red-700 hover:bg-red-700 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 ${className}`}
+      {...props}
+    />
+  );
+}
+
+export function Input({ className = "", ...props }: InputProps) {
+  return (
+    <input
+      className={`min-h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 ${className}`}
+      {...props}
+    />
+  );
+}
+
+export function Select({ className = "", children, ...props }: SelectProps) {
   return (
     <select
       className={`min-h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-950 outline-none transition focus:border-neutral-950 ${className}`}
@@ -71,10 +75,7 @@ export function Select({
   );
 }
 
-export function Textarea({
-  className = "",
-  ...props
-}: TextareaProps) {
+export function Textarea({ className = "", ...props }: TextareaProps) {
   return (
     <textarea
       className={`min-h-24 w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 ${className}`}
@@ -83,11 +84,7 @@ export function Textarea({
   );
 }
 
-export function Field({
-  children,
-  hint,
-  label,
-}: FieldProps) {
+export function Field({ children, hint, label }: FieldProps) {
   return (
     <label className="grid gap-1.5 text-sm font-medium text-neutral-950">
       {label}
@@ -99,10 +96,7 @@ export function Field({
   );
 }
 
-export function Badge({
-  children,
-  tone = "neutral",
-}: BadgeProps) {
+export function Badge({ children, tone = "neutral" }: BadgeProps) {
   const toneClass = {
     danger: "border-red-200 bg-red-50 text-red-700",
     neutral: "border-neutral-200 bg-neutral-50 text-neutral-700",

@@ -20,23 +20,26 @@ export interface ObligationDashboardProps {
   locale: Locale;
   obligations: ObligationResponse[];
   query?: string;
-  selectedId?: string;
   status?: ObligationStatus;
-  successMessage?: string;
+  successNotification?: DashboardNotification;
 }
 
 export interface DashboardHeaderProps {
   dictionary: Dictionary;
   filters: ObligationFilters;
   locale: Locale;
-  selectedId?: string;
 }
 
 export interface DashboardAlertsProps {
   apiError?: ApiError;
   dictionary: Dictionary;
   errorMessage?: string;
-  successMessage?: string;
+  successNotification?: DashboardNotification;
+}
+
+export interface DashboardNotification {
+  message: string;
+  title: string;
 }
 
 export interface ObligationKpisProps {
@@ -56,16 +59,21 @@ export interface ObligationFiltersProps {
   locale: Locale;
 }
 
+export interface DebouncedSearchInputProps {
+  defaultValue?: string;
+  delayMs?: number;
+  locale: Locale;
+  placeholder: string;
+}
+
 export interface ObligationFilterPanelProps {
   children: ReactNode;
 }
 
 export interface ObligationTableProps {
   dictionary: Dictionary;
-  filters: ObligationFilters;
   locale: Locale;
   obligations: ObligationResponse[];
-  selectedId?: string;
 }
 
 export interface ObligationDetailProps {
@@ -82,6 +90,18 @@ export interface ObligationFormProps {
 }
 
 export interface ObligationStatusActionsProps {
+  dictionary: Dictionary;
+  locale: Locale;
+  obligation: ObligationResponse;
+}
+
+export interface ObligationStatusFormProps {
+  dictionary: Dictionary;
+  locale: Locale;
+  obligation: ObligationResponse;
+}
+
+export interface DeleteObligationConfirmationProps {
   dictionary: Dictionary;
   locale: Locale;
   obligation: ObligationResponse;

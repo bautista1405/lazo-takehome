@@ -5,7 +5,6 @@ export function DashboardHeader({
   dictionary,
   filters,
   locale,
-  selectedId,
 }: DashboardHeaderProps) {
   return (
     <header className="flex flex-col gap-5 border-b border-neutral-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
@@ -35,7 +34,6 @@ export function DashboardHeader({
             href={dashboardHref({
               locale: nextLocale,
               query: filters.query,
-              selectedId,
               status: filters.status,
             })}
             key={nextLocale}

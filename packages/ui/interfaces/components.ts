@@ -17,6 +17,23 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
+export type ModalTriggerVariant =
+  | "danger"
+  | "primary"
+  | "secondary"
+  | "success";
+
+export interface ModalProps {
+  children: ReactNode;
+  className?: string;
+  closeLabel?: string;
+  description?: string;
+  title: string;
+  triggerClassName?: string;
+  triggerLabel: string;
+  triggerVariant?: ModalTriggerVariant;
+}
+
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   className?: string;
 }
@@ -26,8 +43,7 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   className?: string;
 }
 
-export interface TextareaProps
-  extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   className?: string;
 }
 
@@ -40,6 +56,13 @@ export interface FieldProps {
 export interface BadgeProps {
   children: ReactNode;
   tone?: "danger" | "neutral" | "success" | "warning";
+}
+
+export interface ToastProps {
+  durationMs?: number;
+  message: string;
+  title: string;
+  tone: "danger" | "success";
 }
 
 export interface AlertProps {
@@ -60,8 +83,7 @@ export interface TableProps {
   className?: string;
 }
 
-export interface TableHeaderCellProps
-  extends ThHTMLAttributes<HTMLTableCellElement> {
+export interface TableHeaderCellProps extends ThHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   className?: string;
 }

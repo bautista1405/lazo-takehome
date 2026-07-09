@@ -1,5 +1,4 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
+import { Modal } from "@repo/ui/components/modal";
 import {
   Table,
   TableBody,
@@ -9,86 +8,107 @@ import {
   TableRow,
 } from "@repo/ui/components/table";
 import type { ObligationTableProps } from "../../interfaces/obligations";
-import { dashboardHref, formatDate } from "../../utils/obligations";
+import { formatDate } from "../../utils/obligations";
+import { DeleteObligationConfirmation } from "./delete-obligation-confirmation";
+import { ObligationForm } from "./obligation-form";
+import { ObligationStatusForm } from "./obligation-status-form";
 import { StatusBadge } from "./status-badge";
 
 export function ObligationsTable({
   dictionary,
-  filters,
   locale,
   obligations,
-  selectedId,
 }: ObligationTableProps) {
   return (
-    <div className="grid max-h-[760px] overflow-auto">
-      <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-        <h2 className="text-base font-semibold">{dictionary.obligationList}</h2>
-        <span className="text-sm text-neutral-500">{obligations.length}</span>
-      </div>
-
+    <div className="grid">
       {obligations.length > 0 ? (
-        <Table>
+        <Table className="max-h-[720px]">
           <TableHeader>
             <TableRow>
               <TableHeaderCell>{dictionary.titleField}</TableHeaderCell>
+              <TableHeaderCell>{dictionary.type}</TableHeaderCell>
               <TableHeaderCell>{dictionary.status}</TableHeaderCell>
               <TableHeaderCell>{dictionary.dueDate}</TableHeaderCell>
               <TableHeaderCell>{dictionary.owner}</TableHeaderCell>
-              <TableHeaderCell>{dictionary.view}</TableHeaderCell>
+              <TableHeaderCell>{dictionary.maskedCompanyTaxId}</TableHeaderCell>
+              <TableHeaderCell className="text-right">
+                {dictionary.actions}
+              </TableHeaderCell>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {obligations.map((obligation) => {
-              const href = dashboardHref({
-                locale,
-                query: filters.query,
-                selectedId: obligation.id,
-                status: filters.status,
-              });
-              const linkLabel = `${dictionary.view}: ${obligation.title}`;
-
-              return (
-                <TableRow
-                  className={`transition hover:bg-neutral-50 ${
-                    obligation.id === selectedId ? "bg-neutral-50" : ""
-                  } ${obligation.overdue ? "bg-red-50/50" : ""}`}
-                  key={obligation.id}
-                >
-                  <TableCell className="font-medium">
-                    <TableCellLink href={href} label={linkLabel}>
-                      {obligation.title}
-                    </TableCellLink>
-                  </TableCell>
-                  <TableCell>
-                    <TableCellLink href={href} label={linkLabel}>
-                      <StatusBadge
-                        dictionary={dictionary}
-                        status={obligation.status}
-                      />
-                    </TableCellLink>
-                  </TableCell>
-                  <TableCell>
-                    <TableCellLink href={href} label={linkLabel}>
-                      {formatDate(obligation.dueDate, locale)}
-                    </TableCellLink>
-                  </TableCell>
-                  <TableCell>
-                    <TableCellLink href={href} label={linkLabel}>
-                      {obligation.owner}
-                    </TableCellLink>
-                  </TableCell>
-                  <TableCell>
-                    <TableCellLink
-                      className="font-medium underline underline-offset-4"
-                      href={href}
-                      label={linkLabel}
+            {obligations.map((obligation) => (
+              <TableRow
+                className={`transition hover:bg-neutral-50 ${
+                  obligation.overdue ? "bg-red-50/50" : ""
+                }`}
+                key={obligation.id}
+              >
+                <TableCell className="min-w-64 font-medium text-neutral-950">
+                  <div className="grid gap-1">
+                    <span>{obligation.title}</span>
+                    <span className="line-clamp-2 text-xs font-normal leading-5 text-neutral-500">
+                      {obligation.description}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>{dictionary.types[obligation.type]}</TableCell>
+                <TableCell>
+                  <StatusBadge
+                    dictionary={dictionary}
+                    status={obligation.status}
+                  />
+                </TableCell>
+                <TableCell>{formatDate(obligation.dueDate, locale)}</TableCell>
+                <TableCell>{obligation.owner}</TableCell>
+                <TableCell>{obligation.maskedCompanyTaxId}</TableCell>
+                <TableCell className="min-w-84">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Modal
+                      className="w-[min(760px,calc(100vw-2rem))]"
+                      closeLabel={dictionary.close}
+                      title={dictionary.edit}
+                      triggerClassName="min-h-8 px-2.5 text-xs"
+                      triggerLabel={dictionary.editDetails}
                     >
-                      {dictionary.view}
-                    </TableCellLink>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                      <ObligationForm
+                        dictionary={dictionary}
+                        locale={locale}
+                        mode="edit"
+                        obligation={obligation}
+                      />
+                    </Modal>
+                    <Modal
+                      closeLabel={dictionary.close}
+                      title={dictionary.updateStatus}
+                      triggerClassName="min-h-8 px-2.5 text-xs"
+                      triggerLabel={dictionary.updateStatus}
+                      triggerVariant="primary"
+                    >
+                      <ObligationStatusForm
+                        dictionary={dictionary}
+                        locale={locale}
+                        obligation={obligation}
+                      />
+                    </Modal>
+                    <Modal
+                      className="w-[min(460px,calc(100vw-2rem))]"
+                      closeLabel={dictionary.close}
+                      title={dictionary.deleteObligation}
+                      triggerClassName="min-h-8 px-2.5 text-xs"
+                      triggerLabel={dictionary.delete}
+                      triggerVariant="danger"
+                    >
+                      <DeleteObligationConfirmation
+                        dictionary={dictionary}
+                        locale={locale}
+                        obligation={obligation}
+                      />
+                    </Modal>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       ) : (
@@ -97,27 +117,5 @@ export function ObligationsTable({
         </p>
       )}
     </div>
-  );
-}
-
-function TableCellLink({
-  children,
-  className = "",
-  href,
-  label,
-}: {
-  children: ReactNode;
-  className?: string;
-  href: string;
-  label: string;
-}) {
-  return (
-    <Link
-      aria-label={label}
-      className={`block -mx-4 -my-3 px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 ${className}`}
-      href={href}
-    >
-      {children}
-    </Link>
   );
 }
