@@ -118,3 +118,4 @@ API_URL=https://<your-render-service>.onrender.com pnpm --filter compliance seed
 
 - Run the Playwright flow in CI (needs a Postgres service container and browser install; kept local-only until it earns its stability).
 - Replace `synchronize` with explicit migrations.
+- Spin up a s3 bucket, connect to it via AWS SDK and upload and store documents there.
