@@ -3,7 +3,7 @@ services:
     name: compliance-api
     runtime: node
     plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter compliance build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter compliance build
     startCommand: node apps/services/compliance/dist/main.js
     healthCheckPath: /health
     envVars:
