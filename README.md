@@ -13,7 +13,7 @@ Architecture and trade-off decisions are documented in [DECISIONS.md](DECISIONS.
 - Web: https://lazo-compliance-tracker.vercel.app
 - API: https://compliance-api-dt6t.onrender.com — OpenAPI docs at [/docs](https://compliance-api-dt6t.onrender.com/docs)
 
-The API runs on Render's free tier: after 15 idle minutes it spins down and the first request takes ~30 seconds while it wakes up.
+The API runs on Render's free tier, which spins down after 15 idle minutes. A scheduled GitHub Action ([keep-warm.yml](.github/workflows/keep-warm.yml)) pings `/health` every 10 minutes to keep it responsive; if a ping is missed, the first request can still take ~30 seconds while the instance wakes up.
 
 ## Repository layout
 
